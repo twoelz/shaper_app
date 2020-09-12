@@ -1,60 +1,32 @@
 import 'dart:convert';
-// import 'dart:io' show Platform;
-import 'package:universal_io/io.dart' show Platform;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:universal_io/io.dart' show Platform;
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-// if (kIsWeb) {
-//   IOWebSocketChannel channel;
-// } else if (Platform.isAndroid) {
-//
-// } else if (Platform.isLinux) {
-//
-// } else {
-//
-// }
-
 // generic channel, not initialized on any platform
 var channel;
-
-// global channel, not initialized on android
-// IOWebSocketChannel channel;
-
-// if kIsWeb
-// // global channel, not initialized on android
-// WebSocketChannel channel;
 
 var connected = false;
 var currentValue = 0;
 
 void main() {
   print('hello');
-
   runApp(MyApp());
 }
 
 void connect() async {
-//  const serverAddress = "ws://localhost:8765";
-  // android emulator use 10.0.2.2 as localhost alias.
   // TODO: change the address to a set up server
-
-  // ----uncomment the correct version before building
-
-  // // running web client
-  // channel = WebSocketChannel.connect(Uri.parse("ws://localhost:8765"));
-  // running android
-  // channel = IOWebSocketChannel.connect("ws://10.0.2.2:8765");
-  // running Linux
 
   if (kIsWeb) {
     print('hello from websocket trying to connect');
     channel = WebSocketChannel.connect(Uri.parse("ws://localhost:8765"));
   } else if (Platform.isAndroid) {
+    // android emulator use 10.0.2.2 as localhost alias.
     channel = IOWebSocketChannel.connect("ws://10.0.2.2:8765");
   } else if (Platform.isIOS || Platform.isMacOS) {
     print('apple platforms are not implemented yet');
