@@ -51,7 +51,9 @@ class NetworkMod with ChangeNotifier {
           configMod.setServerConfigs(data['exp'], data['s_msg']);
           return;
         case 'greeting':
-          print(data['greeting']);
+          print(data['accept player']);
+          print('player accepted: ${data['player']}');
+          configMod.playerNumber = data['player'];
           return;
         case 'print':
           print(data['message']);

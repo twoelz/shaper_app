@@ -7,9 +7,9 @@ import 'package:shaper_app/screens/game_screen.dart';
 
 class ChatMessage {
   String text;
-  String sender;
-  DateTime messageTime;
-  ChatMessage({this.text, this.sender, this.messageTime});
+  int senderNumber;
+  String senderName;
+  ChatMessage({this.text, this.senderNumber, this.senderName});
 }
 
 class ClientMod with ChangeNotifier {

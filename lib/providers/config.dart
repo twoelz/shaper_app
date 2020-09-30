@@ -9,6 +9,7 @@ class ConfigMod with ChangeNotifier {
   String ip = '';
   int port = 0;
   String playerName = '';
+  int playerNumber = 0;
 
   dynamic expMapString = '';
   dynamic sMsgMapString = '';

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shaper_app/providers/client.dart';
 import 'package:provider/provider.dart';
+import 'package:shaper_app/providers/config.dart';
 
 const kSendButtonTextStyle = TextStyle(
   color: Colors.lightBlueAccent,
@@ -44,8 +45,7 @@ class ChatFrame extends StatelessWidget {
                     focusNode: chatFocusNode,
                     onChanged: (value) {
                       print('changing chatMessageText to: $value');
-                      Provider.of<ClientMod>(context, listen: false)
-                          .chatMessageText = value;
+                      context.read<ClientMod>().chatMessageText = value;
                     },
                     decoration: kMessageTextFieldDecoration,
                   ),
@@ -54,15 +54,13 @@ class ChatFrame extends StatelessWidget {
                   onPressed: () {
                     print('CLEARING TEXT');
                     chatMessageTextController.clear();
-                    Provider.of<ClientMod>(context, listen: false)
-                        .chatMessageStreamController
-                        .add(ChatMessage(
-                            text: Provider.of<ClientMod>(
-                              context,
-                              listen: false,
-                            ).chatMessageText,
-                            sender: 'loggedInUser.email',
-                            messageTime: DateTime.now()));
+                    context.read<ClientMod>().chatMessageStreamController.add(
+                          ChatMessage(
+                              text: context.read<ClientMod>().chatMessageText,
+                              senderNumber:
+                                  context.read<ConfigMod>().playerNumber,
+                              senderName: context.read<ConfigMod>().playerName),
+                        );
                     chatFocusNode.requestFocus();
                   },
                   child: Text(
@@ -80,9 +78,10 @@ class ChatFrame extends StatelessWidget {
 }
 
 class MessageBubble extends StatelessWidget {
-  MessageBubble({this.sender, this.text, this.isMe});
+  MessageBubble({this.senderNumber, this.senderName, this.text, this.isMe});
 
-  final String sender;
+  final int senderNumber;
+  final String senderName;
   final String text;
   final bool isMe;
 
@@ -95,7 +94,7 @@ class MessageBubble extends StatelessWidget {
             isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            sender,
+            senderName,
             style: TextStyle(
               fontSize: 12.0,
               color: Colors.black54,
@@ -134,9 +133,9 @@ class MessageBubble extends StatelessWidget {
 class MessagesStream extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // var client = Provider.of<ClientMod>(context);
     return StreamBuilder<ChatMessage>(
-      stream: Provider.of<ClientMod>(context, listen: false).chatMessageStream,
+      stream:
+          context.select((ClientMod clientMod) => clientMod.chatMessageStream),
       builder: (context, snapshot) {
         print('starting build');
         if (!snapshot.hasData) {
@@ -150,19 +149,23 @@ class MessagesStream extends StatelessWidget {
         print('before creating messages');
 
         var messages =
-            Provider.of<ClientMod>(context, listen: false).chatMessages;
+            context.select((ClientMod clientMod) => clientMod.chatMessages);
+
         messages.add(snapshot.data);
 
         List<MessageBubble> messageBubbles = [];
         for (var message in messages.reversed) {
           final messageText = message.text;
-          final messageSender = message.sender;
-          final currentUser = 'GetPlayerName';
+          final messageSenderNumber = message.senderNumber;
+          final messageSenderName = message.senderName;
+          final currentUser =
+              context.select((ConfigMod configMod) => configMod.playerNumber);
 
           final messageBubble = MessageBubble(
-            sender: messageSender,
+            senderNumber: messageSenderNumber,
+            senderName: messageSenderName,
             text: messageText,
-            isMe: currentUser == messageSender,
+            isMe: currentUser == messageSenderNumber,
           );
 
           messageBubbles.add(messageBubble);
