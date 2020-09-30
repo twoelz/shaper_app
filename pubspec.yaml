@@ -32,6 +32,9 @@ dependencies:
   provider: ^4.3.2+2
   http: ^0.12.2
   universal_io: ^1.0.1
+  shared_preferences: ^0.5.10
+  string_validator: ^0.1.4
+#  global_configuration: ^1.6.0
 
 dev_dependencies:
   flutter_test:
