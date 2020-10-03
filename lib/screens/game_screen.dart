@@ -7,29 +7,31 @@ class GameScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Game Screen"),
-      ),
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        // mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            flex: 6,
-            child: Container(
-              color: Colors.lightBlueAccent,
-            ),
-          ),
-          Expanded(
-            flex: 4,
-            child: ChatFrame(),
-            // child: Container(
-            //   color: Colors.green,
-            //   child: Text('Chat Screen'),
-            // ),
-          )
-        ],
-      ),
-    );
+        appBar: AppBar(
+          title: Text("Game Screen"),
+        ),
+        body: OrientationBuilder(
+          builder: (context, orientation) {
+            return Flex(
+              direction: (orientation == Orientation.portrait)
+                  ? Axis.vertical
+                  : Axis.horizontal,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  flex: 6,
+                  child: Container(
+                    color: Colors.lightBlueAccent,
+                  ),
+                ),
+                Expanded(
+                  flex: 4,
+                  child: ChatFrame(),
+                )
+              ],
+            );
+          },
+        ));
   }
 }

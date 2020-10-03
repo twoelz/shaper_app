@@ -25,10 +25,10 @@ const kMessageContainerDecoration = BoxDecoration(
   ),
 );
 
+final chatMessageTextController = TextEditingController();
+final chatFocusNode = FocusNode();
+
 class ChatFrame extends StatelessWidget {
-  final chatMessageTextController = TextEditingController();
-  final chatFocusNode = FocusNode();
-  //
   // void _sendMessage_to_self(ctx) {
   //   // Note: cannot use ctx.read must use Provider.of
   //   chatMessageTextController.clear();
@@ -213,11 +213,12 @@ class MessagesStream extends StatelessWidget {
               // TODO: check if other option is better here. Maybe Placeholder
               );
         }
-
         List<ChatMessage> messages =
             context.select((ClientMod clientMod) => clientMod.chatMessages);
 
-        messages.add(snapshot.data);
+        if (messages.length == 0 || messages.last != snapshot.data) {
+          messages.add(snapshot.data);
+        }
 
         List<MessageBubble> messageBubbles = [];
         for (var message in messages.reversed) {
