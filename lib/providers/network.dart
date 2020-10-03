@@ -33,13 +33,17 @@ class NetworkMod with ChangeNotifier {
   }
 
   NetworkMod() {
-    print('HELLO FROM NETWORKMODEL');
+    // TODO: check if this is needed (and if not, what use this is)
   }
 
   void consume(message) {
     final Map<String, dynamic> data = json.decode(message);
-    gameStreamController.sink.add(data);
-    if (data.containsKey('type')) {
+    if (data.containsKey('game data')) {
+      gameStreamController.sink.add(data);
+    }
+
+    // gameStreamController.sink.add(data);
+    else if (data.containsKey('type')) {
       switch (data['type']) {
         //
         // When the user sends the "join" action, he provides a name.
@@ -47,11 +51,9 @@ class NetworkMod with ChangeNotifier {
         // broadcast the list of all the players to everyone
         //
         case 'configs':
-          print('nothing here');
           configMod.setServerConfigs(data['exp'], data['s_msg']);
           return;
-        case 'greeting':
-          print(data['accept player']);
+        case 'accept player':
           print('player accepted: ${data['player']}');
           configMod.playerNumber = data['player'];
           return;
@@ -59,14 +61,16 @@ class NetworkMod with ChangeNotifier {
           print(data['message']);
           return;
         default:
-          gameStreamController.sink.add(data);
+          print('invalid network data received: $data');
       }
+    } else {
+      print('invalid unknown data received: $data');
     }
   }
 
   void disconnect() async {
+    print('disconnecting');
     closeGameStreamController();
-    print('disconnect stuff here');
     await channel.sink.add('{"action":"disconnect"}');
     await channel.sink.close();
     connected = false;
@@ -87,6 +91,7 @@ class NetworkMod with ChangeNotifier {
     int port = prefs.getInt('port') ?? prefs.getInt('defaultPort');
     await prefs.setInt('port', port);
 
+    // connect to WebSocket according to platform
     try {
       if (kIsWeb) {
         channel = WebSocketChannel.connect(Uri.parse("ws://$ip:$port"));
@@ -113,30 +118,28 @@ class NetworkMod with ChangeNotifier {
       return false;
     }
 
-    // ----ends here
-
-    print('did error occur yet?');
-
+    // connected now. send name
     channel.sink.add(prefs.getString('playerName'));
 
-    print('or we got it here?');
-
+    // set game variables
     connected = true;
-
     gameStreamController = StreamController<Map<String, dynamic>>();
 
+    // start listening to server
     channel.stream.listen((message) {
       consume(message);
-      print('CONNECTED YEAH!');
     }, onDone: () {
-      print('connecting aborted');
+      print('connection aborted');
       connected = false;
     }, onError: (e) {
       print('server error: $e');
       connected = false;
     });
 
-    print('perhaps now');
     return connected;
+  }
+
+  void sendChatMessageToServer(String message) async {
+    await channel.sink.add('{"action":"chat", "chat":"$message"}');
   }
 }

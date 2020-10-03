@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:shaper_app/providers/client.dart';
 import 'package:provider/provider.dart';
+
+import 'package:universal_io/io.dart' show Platform;
+import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
+
 import 'package:shaper_app/providers/config.dart';
 
 const kSendButtonTextStyle = TextStyle(
   color: Colors.lightBlueAccent,
   fontWeight: FontWeight.bold,
-  fontSize: 18.0,
+  // fontSize: Theme.of(context).textTheme.body1.fontSize,
 );
 
 const kMessageTextFieldDecoration = InputDecoration(
@@ -24,9 +28,32 @@ const kMessageContainerDecoration = BoxDecoration(
 class ChatFrame extends StatelessWidget {
   final chatMessageTextController = TextEditingController();
   final chatFocusNode = FocusNode();
+  //
+  // void _sendMessage_to_self(ctx) {
+  //   // Note: cannot use ctx.read must use Provider.of
+  //   chatMessageTextController.clear();
+  //   Provider.of<ClientMod>(ctx, listen: false).chatMessageStreamController.add(
+  //     ChatMessage(
+  //         text: Provider.of<ClientMod>(ctx, listen: false).chatMessageText,
+  //         senderNumber:
+  //         Provider.of<ConfigMod>(ctx, listen: false).playerNumber,
+  //         senderName:
+  //         Provider.of<ConfigMod>(ctx, listen: false).playerName),
+  //   );
+  //   chatFocusNode.requestFocus();
+  // }
 
   @override
   Widget build(BuildContext context) {
+    if (Platform.isAndroid || Platform.isIOS) {
+      // flutter_keyboard_visibility: makes sure chat gets focus
+      // TODO: check if I have to dispose of onChange at any point
+      KeyboardVisibility.onChange.listen((bool visible) {
+        if (visible) {
+          chatFocusNode.requestFocus();
+        }
+      });
+    }
     return SafeArea(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -41,27 +68,33 @@ class ChatFrame extends StatelessWidget {
                 Expanded(
                   child: TextField(
                     controller: chatMessageTextController,
-                    autofocus: true,
+                    autofocus: (Platform.isLinux ||
+                            Platform.isWindows ||
+                            Platform.isMacOS)
+                        ? true
+                        : false,
                     focusNode: chatFocusNode,
                     onChanged: (value) {
-                      print('changing chatMessageText to: $value');
                       context.read<ClientMod>().chatMessageText = value;
                     },
                     decoration: kMessageTextFieldDecoration,
                   ),
                 ),
                 FlatButton(
+                  // onPressed: () => _sendMessage(context),
                   onPressed: () {
-                    print('CLEARING TEXT');
+                    context.read<ClientMod>().sendChatMessage();
                     chatMessageTextController.clear();
-                    context.read<ClientMod>().chatMessageStreamController.add(
-                          ChatMessage(
-                              text: context.read<ClientMod>().chatMessageText,
-                              senderNumber:
-                                  context.read<ConfigMod>().playerNumber,
-                              senderName: context.read<ConfigMod>().playerName),
-                        );
-                    chatFocusNode.requestFocus();
+                    if (Platform.isLinux ||
+                        Platform.isWindows ||
+                        Platform.isMacOS) {
+                      chatFocusNode.requestFocus();
+                    } else {
+                      FocusScopeNode currentFocus = FocusScope.of(context);
+                      if (!currentFocus.hasPrimaryFocus) {
+                        currentFocus.unfocus();
+                      }
+                    }
                   },
                   child: Text(
                     'Send',
@@ -78,28 +111,45 @@ class ChatFrame extends StatelessWidget {
 }
 
 class MessageBubble extends StatelessWidget {
-  MessageBubble({this.senderNumber, this.senderName, this.text, this.isMe});
+  MessageBubble(
+      {this.senderNumber,
+      this.senderName,
+      this.text,
+      this.isMe,
+      this.sameSender});
 
   final int senderNumber;
   final String senderName;
   final String text;
   final bool isMe;
+  final bool sameSender;
+
+  static const List<Color> senderColors = [
+    Colors.red,
+    Colors.green,
+    Colors.purple,
+    Colors.orange,
+    Colors.indigo,
+    Colors.pink,
+    Colors.teal,
+    Colors.amber,
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.all(10.0),
+      padding: sameSender ? EdgeInsets.all(3.0) : EdgeInsets.all(5.0),
       child: Column(
         crossAxisAlignment:
             isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            senderName,
-            style: TextStyle(
-              fontSize: 12.0,
-              color: Colors.black54,
-            ),
-          ),
+          // Text(
+          //   senderName,
+          //   style: TextStyle(
+          //     fontSize: 12.0,
+          //     color: Colors.black54,
+          //   ),
+          // ),
           Material(
             borderRadius: isMe
                 ? BorderRadius.only(
@@ -111,16 +161,37 @@ class MessageBubble extends StatelessWidget {
                     bottomRight: Radius.circular(30.0),
                     topRight: Radius.circular(30.0),
                   ),
-            elevation: 5.0,
-            color: isMe ? Colors.lightBlueAccent : Colors.white,
+            elevation: 3.0,
+            color: isMe ? Colors.tealAccent : Colors.white,
             child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-              child: Text(
-                text,
-                style: TextStyle(
-                  color: isMe ? Colors.white : Colors.black54,
-                  fontSize: 15.0,
-                ),
+              padding: EdgeInsets.symmetric(vertical: 6.0, horizontal: 14.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  (sameSender || isMe)
+                      ?
+                      // if same sender or own chat display nothing here
+                      SizedBox.shrink()
+                      :
+                      // if not the same, shows sender info
+                      Text(
+                          'P${senderNumber + 1} $senderName',
+                          textAlign: TextAlign.left,
+                          style: TextStyle(
+                            color: senderColors[
+                                senderNumber % senderColors.length],
+                            // fontSize: 15.0,
+                          ),
+                        ),
+                  Text(
+                    text,
+                    style: TextStyle(
+                      // TODO: currently using same colors. remove isMe question.
+                      color: isMe ? Colors.black : Colors.black,
+                      // fontSize: 15.0,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -137,18 +208,13 @@ class MessagesStream extends StatelessWidget {
       stream:
           context.select((ClientMod clientMod) => clientMod.chatMessageStream),
       builder: (context, snapshot) {
-        print('starting build');
         if (!snapshot.hasData) {
-          print('NO DATA');
           return Center(
-              // child: CircularProgressIndicator(
-              //   backgroundColor: Colors.lightBlueAccent,
-              // ),
+              // TODO: check if other option is better here. Maybe Placeholder
               );
         }
-        print('before creating messages');
 
-        var messages =
+        List<ChatMessage> messages =
             context.select((ClientMod clientMod) => clientMod.chatMessages);
 
         messages.add(snapshot.data);
@@ -160,12 +226,14 @@ class MessagesStream extends StatelessWidget {
           final messageSenderName = message.senderName;
           final currentUser =
               context.select((ConfigMod configMod) => configMod.playerNumber);
+          final messageSameSender = message.sameSender;
 
           final messageBubble = MessageBubble(
             senderNumber: messageSenderNumber,
             senderName: messageSenderName,
             text: messageText,
             isMe: currentUser == messageSenderNumber,
+            sameSender: messageSameSender,
           );
 
           messageBubbles.add(messageBubble);
