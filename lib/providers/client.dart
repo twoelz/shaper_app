@@ -34,15 +34,30 @@ class ClientMod with ChangeNotifier {
 
   // network methods
   void connect() async {
-    bool connected = await networkMod.connect();
-    if (connected) {
-      networkMod.gameStreamController.stream.listen((data) {
-        consumeGameData(data);
-      }, onDone: () {
-        print('Task Done');
-      }, onError: (error) {
-        print("Some Error");
-      });
+    await networkMod.connect(confirmConnected);
+    // if (connected) {
+    //   await confirmConnected();
+    // }
+  }
+
+  Future<void> confirmConnected() async {
+    final bool connected = await networkMod.confirmConnected();
+    if (!connected) {
+      // TODO: make sure connected is not true anywhere etc
+      return;
+    }
+    if (networkMod.connected) {
+      if (!networkMod.gameStreamController.hasListener) {
+        print('start listening');
+        networkMod.gameStreamController.stream.listen((data) {
+          consumeGameData(data);
+        }, onDone: () {
+          print('Task Done');
+        }, onError: (error) {
+          print("Some Error");
+        });
+      }
+      print('moving navigator now');
       navigatorKey.currentState.pushNamed(GameScreen.id);
     }
   }

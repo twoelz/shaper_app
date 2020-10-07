@@ -7,7 +7,7 @@ import 'package:string_validator/string_validator.dart';
 
 class ConfigMod with ChangeNotifier {
   String ip = '';
-  int port = 0;
+  String port = '0';
   String playerName = '';
   int playerNumber = 0;
 
@@ -26,60 +26,74 @@ class ConfigMod with ChangeNotifier {
   }
 
   void setPlayerName(String newPlayerName) async {
+    if (newPlayerName == null) {
+      return;
+    }
+
     newPlayerName = newPlayerName.trim();
     if (newPlayerName == playerName) {
       return;
     }
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (newPlayerName == '') {
+      print('invalid player name');
+      return;
+    }
 
     playerName = newPlayerName;
-    if (playerName == '') {
-      playerName = prefs.getString('defaultPlayerName');
-    }
+    SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('playerName', playerName);
-
     notifyListeners();
+    print('ip now is $ip');
   }
 
   void setIp(String newIp) async {
+    if (newIp == null) {
+      return;
+    }
     newIp = newIp.trim();
     if (newIp == ip) {
       return;
     }
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (newIp == 'localhost') {
+      // do nothing
+    } else if (newIp == '' || !isIP(newIp)) {
+      print('invalid IP');
+      return;
+      // ip = prefs.getString('defaultIp');
+    }
 
     ip = newIp;
 
-    if (ip == 'localhost') {
-      // do nothing
-    } else if (ip == '' || !isIP(ip)) {
-      ip = prefs.getString('defaultIp');
-    }
-
+    SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('ip', ip);
     notifyListeners();
   }
 
   void setPort(String newPort) async {
+    if (newPort == null) {
+      return;
+    }
+
     newPort = newPort.trim();
 
     if (!isInt(newPort)) {
       print('invalid PORT');
       return;
     }
-    int intNewPort = int.parse(newPort);
+    // int intNewPort = int.parse(newPort);
+    //
+    // if (intNewPort == port) {
+    //   return;
+    // }
 
-    if (intNewPort == port) {
+    if (newPort == port) {
       return;
     }
-
+    port = newPort;
     SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    port = intNewPort;
-
-    await prefs.setInt('port', port);
+    await prefs.setString('port', port);
     notifyListeners();
   }
 
@@ -94,7 +108,12 @@ class ConfigMod with ChangeNotifier {
   Future syncDataWithProvider() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     ip = prefs.getString('ip');
-    port = prefs.getInt('port');
+    try {
+      port = prefs.getString('port');
+    } catch (e) {
+      print(e);
+      port = prefs.getInt('port').toString();
+    }
     playerName = prefs.getString('playerName');
     notifyListeners();
   }
@@ -104,13 +123,13 @@ Future setDefaults() async {
   // network defaults
   SharedPreferences prefs = await SharedPreferences.getInstance();
   await prefs.setString('defaultIp', 'localhost');
-  await prefs.setInt('defaultPort', 8765);
+  await prefs.setString('defaultPort', '8765');
 
   String ip = prefs.getString('ip') ?? prefs.getString('defaultIp');
   await prefs.setString('ip', ip);
 
-  int port = prefs.getInt('port') ?? prefs.getInt('defaultPort');
-  await prefs.setInt('port', port);
+  String port = prefs.getString('port') ?? prefs.getString('defaultPort');
+  await prefs.setString('port', port);
 
   // game defaults
   await prefs.setString('defaultPlayerName', 'player');

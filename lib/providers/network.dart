@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 import 'package:universal_io/io.dart' show Platform;
 import 'package:web_socket_channel/io.dart';
@@ -16,8 +18,8 @@ class NetworkMod with ChangeNotifier {
   var channel;
   var connected = false;
 
-  StreamController<Map<String, dynamic>> gameStreamController;
-
+  // StreamController<Map<String, dynamic>> gameStreamController;
+  final gameStreamController = StreamController<Map<String, dynamic>>();
   void closeGameStreamController() {
     try {
       gameStreamController.close(); //Streams must be closed when not needed
@@ -76,10 +78,13 @@ class NetworkMod with ChangeNotifier {
     connected = false;
   }
 
-  Future<bool> connect() async {
+  Future<void> connect(Function confirmConnectedCallback) async {
     if (connected) {
+      print('connected already');
       return false;
     }
+
+    print('not connected, will try to connect');
 
     // TODO: change the address to a set up server
 
@@ -88,54 +93,96 @@ class NetworkMod with ChangeNotifier {
     String ip = prefs.getString('ip') ?? prefs.getString('defaultIp');
     await prefs.setString('ip', ip);
 
-    int port = prefs.getInt('port') ?? prefs.getInt('defaultPort');
-    await prefs.setInt('port', port);
+    String port = prefs.getString('port') ?? prefs.getString('defaultPort');
+    await prefs.setString('port', port);
 
-    // connect to WebSocket according to platform
-    try {
-      if (kIsWeb) {
-        channel = WebSocketChannel.connect(Uri.parse("ws://$ip:$port"));
-      } else if (Platform.isAndroid) {
-        String androidIp;
-        if (ip == 'localhost') {
-          // android emulator use 10.0.2.2 as localhost alias.
-          androidIp = '10.0.2.2';
-        } else {
-          androidIp = ip;
-        }
-        channel = IOWebSocketChannel.connect("ws://$androidIp:$port");
-      } else if (Platform.isIOS || Platform.isMacOS) {
-        print('Apple platforms are not implemented yet');
-        return false;
-      } else if (Platform.isLinux || Platform.isWindows) {
-        channel = IOWebSocketChannel.connect("ws://$ip:$port");
+    String myWebSocketChannel;
+    String myWebSocketAddress;
+
+    if (kIsWeb) {
+      myWebSocketAddress = 'ws://$ip:$port';
+      myWebSocketChannel = 'WebSocketChannel';
+    } else if (Platform.isAndroid) {
+      String androidIp;
+      if (ip == 'localhost') {
+        // android emulator use 10.0.2.2 as localhost alias.
+        androidIp = '10.0.2.2';
       } else {
-        print('ERROR: Unknown platform');
-        return false;
+        androidIp = ip;
       }
-    } catch (e) {
-      print("Error! can not connect WS connectWs " + e.toString());
+      myWebSocketAddress = 'ws://$androidIp:$port';
+      myWebSocketChannel = 'IOWebSocketChannel';
+    } else if (Platform.isIOS || Platform.isMacOS) {
+      print('Apple platforms are not implemented yet');
+      return false;
+    } else if (Platform.isLinux || Platform.isWindows) {
+      myWebSocketAddress = 'ws://$ip:$port';
+      myWebSocketChannel = 'IOWebSocketChannel';
+    } else {
+      print('ERROR: Unknown platform');
       return false;
     }
 
-    // connected now. send name
-    channel.sink.add(prefs.getString('playerName'));
+    try {
+      if (myWebSocketChannel == 'IOWebSocketChannel') {
+        await WebSocket.connect(myWebSocketAddress).then((ws) {
+          channel = IOWebSocketChannel(ws);
+          confirmConnectedCallback();
+        });
+      } else if (myWebSocketChannel == 'WebSocketChannel') {
+        // await WebSocket.connect(myWebSocketAddress).then((ws) {
+        //   print('CHROME connected!');
+        //   // channel = WebSocketChannel(ws);
+        //   ws.close();
+        //   print('CHROME WS CLOSED. WILL TRY RECONNECT');
+        //   // channel = WebSocketChannel.connect(Uri.parse(myWebSocketAddress));
+        //   print('CHROME RECONNECTED');
+        // });
 
+        channel = WebSocketChannel.connect(Uri.parse(myWebSocketAddress));
+
+        new Timer(const Duration(seconds: 2), () => confirmConnectedCallback());
+      } else {
+        print('Error! Unknown WebSocketChannel type: $myWebSocketChannel');
+        connected = false;
+        return false;
+      }
+    } catch (e) {
+      print("Error! can not connect WebSocket " + e.toString());
+      connected = false;
+      return false;
+    }
+
+    print('so far it seems to have connected. waiting for the callback now');
+  }
+
+  Future<bool> confirmConnected() async {
     // set game variables
     connected = true;
-    gameStreamController = StreamController<Map<String, dynamic>>();
 
     // start listening to server
-    channel.stream.listen((message) {
+    await channel.stream.listen((message) {
       consume(message);
     }, onDone: () {
       print('connection aborted');
       connected = false;
-    }, onError: (e) {
+    }, onError: (e) async {
       print('server error: $e');
       connected = false;
+      await channel.sink.close();
+      channel = null;
+      return false;
     });
 
+    print('still connected?');
+    print('connected: $connected');
+
+    if (connected) {
+      print('sending player name to server');
+      // connected now. send name
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await channel.sink.add(prefs.getString('playerName'));
+    }
     return connected;
   }
 

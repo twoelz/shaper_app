@@ -11,6 +11,8 @@ import 'package:shaper_app/providers/client.dart';
 import 'package:shaper_app/screens/config_info_screen.dart';
 import 'package:shaper_app/screens/connect_screen.dart';
 import 'package:shaper_app/screens/game_screen.dart';
+// TODO: remove this import below (shared_preferences)
+import 'package:shared_preferences/shared_preferences.dart';
 
 // for navigation without context: start_
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -18,6 +20,11 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // TODO remove clear here
+  final pref = await SharedPreferences.getInstance();
+  await pref.clear();
+
   await setDefaults();
   runApp(MyApp());
 }

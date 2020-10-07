@@ -161,7 +161,7 @@ class MessageBubble extends StatelessWidget {
                     bottomRight: Radius.circular(30.0),
                     topRight: Radius.circular(30.0),
                   ),
-            elevation: 3.0,
+            // elevation: 3.0,
             color: isMe ? Colors.tealAccent : Colors.white,
             child: Padding(
               padding: EdgeInsets.symmetric(vertical: 6.0, horizontal: 14.0),
@@ -180,15 +180,14 @@ class MessageBubble extends StatelessWidget {
                           style: TextStyle(
                             color: senderColors[
                                 senderNumber % senderColors.length],
-                            // fontSize: 15.0,
                           ),
                         ),
                   Text(
                     text,
                     style: TextStyle(
-                      // TODO: currently using same colors. remove isMe question.
-                      color: isMe ? Colors.black : Colors.black,
-                      // fontSize: 15.0,
+                      // use commented version below to set different colors.
+                      // color: isMe ? Colors.black : Colors.black,
+                      color: Colors.black,
                     ),
                   ),
                 ],
