@@ -11,6 +11,61 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ConnectScreen extends StatelessWidget {
   static const String id = '/Connect';
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+//      appBar: AppBar(
+//        title: Text(widget.title),
+//      ),
+      body: Column(children: [
+        MyVerticallyConstrainedBox(
+          maxHeight: 40,
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.people,
+              size: Theme.of(context).textTheme.headline2.fontSize,
+            ),
+            Text(' Shaper', style: Theme.of(context).textTheme.headline3),
+          ],
+        ),
+        MyVerticallyConstrainedBox(
+          maxHeight: 10,
+        ),
+        MyConfigTable(),
+        MyVerticallyConstrainedBox(
+          maxHeight: 40,
+        ),
+        ConnectButtonRow(),
+        MyVerticallyConstrainedBox(
+          maxHeight: 40,
+        ),
+      ]),
+    );
+  }
+}
+
+class MyVerticallyConstrainedBox extends StatelessWidget {
+  final double maxHeight;
+  MyVerticallyConstrainedBox({this.maxHeight});
+
+  @override
+  Widget build(BuildContext context) {
+    return Flexible(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: maxHeight,
+          minHeight: 1,
+        ),
+        child: Container(),
+      ),
+    );
+  }
+}
+
+class MyConfigTable extends StatelessWidget {
   final _playerNameController = TextEditingController();
   final _ipController = TextEditingController();
   final _portController = TextEditingController();
@@ -53,173 +108,252 @@ class ConnectScreen extends StatelessWidget {
     _portController.clear();
   }
 
-  void _connect(ctx) {
-    Provider.of<ClientMod>(ctx, listen: false).connect();
-  }
+  final List<TableCell> emptyCells = [
+    TableCell(
+      child: Container(),
+    ),
+    TableCell(
+      child: Container(),
+    ),
+    TableCell(
+      child: Container(),
+    ),
+    TableCell(
+      child: Container(),
+    ),
+  ];
 
+  @override
+  Widget build(BuildContext context) {
+    final bool showNetConfig = true;
+
+    return Table(
+        defaultVerticalAlignment: TableCellVerticalAlignment.baseline,
+        border: TableBorder.all(color: Colors.black26, width: 2),
+        columnWidths: {
+          0: FixedColumnWidth(180.0),
+          1: FixedColumnWidth(160.0),
+          2: FixedColumnWidth(80.0), //fixed to 100 width
+          3: FixedColumnWidth(80.0),
+        },
+        children: [
+          TableRow(children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 5),
+              child: Row(
+                children: [
+                  Icon(Icons.perm_identity),
+                  Text(' Name: '),
+                  Text(context.watch<ConfigMod>().playerName,
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 5),
+              child: TextField(
+                controller: _playerNameController,
+                onSubmitted: (String value) => _setPlayerName(context),
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  hintText: 'New name?',
+                ),
+              ),
+            ),
+            Container(
+              height: 44.0,
+              padding: EdgeInsets.fromLTRB(5, 0, 5, 5),
+              child: RaisedButton(
+                onPressed: () => _setPlayerName(context),
+                child: Text(
+                  "Change",
+                ),
+              ),
+            ),
+            Container(
+              height: 44.0,
+              padding: EdgeInsets.fromLTRB(5, 0, 5, 5),
+              child: RaisedButton(
+                onPressed: () => _setPlayerNameDefault(context),
+                child: Text(
+                  "Default",
+                ),
+              ),
+            ),
+          ]),
+          showNetConfig
+              ? TableRow(children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 5),
+                    child: Row(
+                      children: [
+                        Icon(Icons.settings_ethernet),
+                        Text(' IP: '),
+                        Text(context.watch<ConfigMod>().ip,
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 5),
+                    child: TextField(
+                      controller: _ipController,
+                      onSubmitted: (String value) => _setIp(context),
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        hintText: 'New IP?',
+                      ),
+                    ),
+                  ),
+                  Container(
+                    height: 44.0,
+                    padding: EdgeInsets.fromLTRB(5, 0, 5, 5),
+                    child: RaisedButton(
+                      onPressed: () => _setIp(context),
+                      child: Text(
+                        "Change",
+                      ),
+                    ),
+                  ),
+                  Container(
+                    height: 44.0,
+                    padding: EdgeInsets.fromLTRB(5, 0, 5, 5),
+                    child: RaisedButton(
+                      onPressed: () => _setIpDefault(context),
+                      child: Text(
+                        "Default",
+                      ),
+                    ),
+                  ),
+                ])
+              : TableRow(children: emptyCells),
+          showNetConfig
+              ? TableRow(children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 5),
+                    child: Row(
+                      children: [
+                        Icon(Icons.meeting_room),
+                        Text(
+                          ' PORT: ${context.watch<ConfigMod>().port}',
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 5),
+                    child: TextField(
+                      controller: _portController,
+                      onSubmitted: (String value) => _setPort(context),
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        hintText: 'New PORT?',
+                      ),
+                    ),
+                  ),
+                  Container(
+                    height: 44.0,
+                    padding: EdgeInsets.fromLTRB(5, 0, 5, 5),
+                    child: RaisedButton(
+                      onPressed: () => _setPort(context),
+                      child: Text(
+                        "Change",
+                      ),
+                    ),
+                  ),
+                  Container(
+                    height: 44.0,
+                    padding: EdgeInsets.fromLTRB(5, 0, 5, 5),
+                    child: RaisedButton(
+                      onPressed: () => _setPortDefault(context),
+                      child: Text(
+                        "Default",
+                      ),
+                    ),
+                  ),
+                ])
+              : TableRow(children: emptyCells),
+        ]);
+  }
+}
+
+class ConnectButtonRow extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        children: [
+          context.watch<NetworkMod>().connected
+              ? DisconnectButton()
+              : ConnectButton(),
+          SizedBox(
+            width: 150,
+          ),
+        ]);
+  }
+}
+
+class DisconnectButton extends StatelessWidget {
   void _disconnect(ctx) {
     Provider.of<NetworkMod>(ctx, listen: false).disconnect();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-//      appBar: AppBar(
-//        title: Text(widget.title),
-//      ),
-      body: Column(children: [
-        Table(
-            defaultVerticalAlignment: TableCellVerticalAlignment.baseline,
-            border: TableBorder.all(),
-            columnWidths: {
-              0: FixedColumnWidth(180.0),
-              1: FixedColumnWidth(160.0),
-              2: FixedColumnWidth(80.0), //fixed to 100 width
-              3: FixedColumnWidth(80.0),
-            },
-            children: [
-              TableRow(children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 5),
-                  child: Text(
-                    'Player: ${context.watch<ConfigMod>().playerName}',
-                    // textAlign: TextAlign.center,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 5),
-                  child: TextField(
-                    controller: _playerNameController,
-                    onSubmitted: (String value) => _setPlayerName(context),
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      hintText: 'New name?',
-                    ),
-                  ),
-                ),
-                Container(
-                  height: 44.0,
-                  padding: EdgeInsets.fromLTRB(5, 0, 5, 5),
-                  child: RaisedButton(
-                    onPressed: () => _setPlayerName(context),
-                    child: Text(
-                      "Change",
-                    ),
-                  ),
-                ),
-                Container(
-                  height: 44.0,
-                  padding: EdgeInsets.fromLTRB(5, 0, 5, 5),
-                  child: RaisedButton(
-                    onPressed: () => _setPlayerNameDefault(context),
-                    child: Text(
-                      "Default",
-                    ),
-                  ),
-                ),
-              ]),
-              TableRow(children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 5),
-                  child: Text(
-                    'IP: ${context.watch<ConfigMod>().ip}',
-                    // textAlign: TextAlign.center,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 5),
-                  child: TextField(
-                    controller: _ipController,
-                    onSubmitted: (String value) => _setIp(context),
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      hintText: 'New IP?',
-                    ),
-                  ),
-                ),
-                Container(
-                  height: 44.0,
-                  padding: EdgeInsets.fromLTRB(5, 0, 5, 5),
-                  child: RaisedButton(
-                    onPressed: () => _setIp(context),
-                    child: Text(
-                      "Change",
-                    ),
-                  ),
-                ),
-                Container(
-                  height: 44.0,
-                  padding: EdgeInsets.fromLTRB(5, 0, 5, 5),
-                  child: RaisedButton(
-                    onPressed: () => _setIpDefault(context),
-                    child: Text(
-                      "Default",
-                    ),
-                  ),
-                ),
-              ]),
-              TableRow(children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 5),
-                  child: Text(
-                    'PORT: ${context.watch<ConfigMod>().port}',
-                    // textAlign: TextAlign.center,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 5),
-                  child: TextField(
-                    controller: _portController,
-                    onSubmitted: (String value) => _setPort(context),
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      hintText: 'New PORT?',
-                    ),
-                  ),
-                ),
-                Container(
-                  height: 44.0,
-                  padding: EdgeInsets.fromLTRB(5, 0, 5, 5),
-                  child: RaisedButton(
-                    onPressed: () => _setPort(context),
-                    child: Text(
-                      "Change",
-                    ),
-                  ),
-                ),
-                Container(
-                  height: 44.0,
-                  padding: EdgeInsets.fromLTRB(5, 0, 5, 5),
-                  child: RaisedButton(
-                    onPressed: () => _setPortDefault(context),
-                    child: Text(
-                      "Default",
-                    ),
-                  ),
-                ),
-              ]),
-            ]),
-        Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            children: [
-              FlatButton(
-                onPressed: () => _connect(context),
-                child: Text(
-                  "Connect",
-                ),
-              ),
-              SizedBox(
-                width: 150,
-              ),
-              FlatButton(
-                onPressed: () => _disconnect(context),
-                child: Text(
-                  "Disconnect",
-                ),
-              )
-            ]),
-      ]),
+    return FlatButton(
+      color: Colors.red,
+      onPressed: () => _disconnect(context),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Icon(
+              Icons.logout,
+              color: Colors.white,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Text(
+              "Disconnect",
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ConnectButton extends StatelessWidget {
+  void _connect(ctx) {
+    Provider.of<ClientMod>(ctx, listen: false).connect();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FlatButton(
+      color: Colors.green,
+      onPressed: () => _connect(context),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Icon(
+              Icons.login,
+              color: Colors.white,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Text(
+              "Connect",
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

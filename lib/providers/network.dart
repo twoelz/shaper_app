@@ -9,6 +9,7 @@ import 'package:flutter/widgets.dart';
 import 'package:universal_io/io.dart' show Platform;
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/status.dart' as status;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:shaper_app/providers/config.dart';
@@ -20,7 +21,8 @@ class NetworkMod with ChangeNotifier {
 
   // StreamController<Map<String, dynamic>> gameStreamController;
   final gameStreamController = StreamController<Map<String, dynamic>>();
-  void closeGameStreamController() {
+
+  Future<void> closeGameStreamController() async {
     try {
       gameStreamController.close(); //Streams must be closed when not needed
     } on Exception catch (_) {
@@ -72,10 +74,12 @@ class NetworkMod with ChangeNotifier {
 
   void disconnect() async {
     print('disconnecting');
-    closeGameStreamController();
     await channel.sink.add('{"action":"disconnect"}');
-    await channel.sink.close();
+    await closeGameStreamController();
+    await channel.sink.close(status.normalClosure);
     connected = false;
+    channel = null;
+    notifyListeners();
   }
 
   Future<void> connect(Function confirmConnectedCallback) async {
@@ -152,7 +156,7 @@ class NetworkMod with ChangeNotifier {
       connected = false;
       return false;
     }
-
+    notifyListeners();
     print('so far it seems to have connected. waiting for the callback now');
   }
 
@@ -166,13 +170,14 @@ class NetworkMod with ChangeNotifier {
     }, onDone: () {
       print('connection aborted');
       connected = false;
+      return false;
     }, onError: (e) async {
       print('server error: $e');
       connected = false;
       await channel.sink.close();
       channel = null;
       return false;
-    });
+    }, cancelOnError: true);
 
     print('still connected?');
     print('connected: $connected');
@@ -183,6 +188,7 @@ class NetworkMod with ChangeNotifier {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await channel.sink.add(prefs.getString('playerName'));
     }
+    notifyListeners();
     return connected;
   }
 

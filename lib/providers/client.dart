@@ -7,10 +7,10 @@ import 'package:shaper_app/providers/network.dart';
 import 'package:shaper_app/screens/game_screen.dart';
 
 class ChatMessage {
-  String text;
-  int senderNumber;
-  String senderName;
-  bool sameSender;
+  final String text;
+  final int senderNumber;
+  final String senderName;
+  final bool sameSender;
   ChatMessage({this.text, this.senderNumber, this.senderName, this.sameSender});
 }
 
@@ -53,12 +53,19 @@ class ClientMod with ChangeNotifier {
           consumeGameData(data);
         }, onDone: () {
           print('Task Done');
+          return;
         }, onError: (error) {
-          print("Some Error");
-        });
+          print("Error in consumeGameData: $error");
+          // TODO: do stuff to disconnect if needed
+          disconnect();
+          return;
+        }, cancelOnError: true);
       }
       print('moving navigator now');
       navigatorKey.currentState.pushNamed(GameScreen.id);
+    } else {
+      print('gameStream has already been listened to');
+      return;
     }
   }
 
