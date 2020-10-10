@@ -44,7 +44,7 @@ dev_dependencies:
 
 
 flutter_icons:
-  image_path: "lib/assets/icon/people.png"
+  image_path: "assets/icons/people.png"
 #  image_path_android: "assets/images/icon-710x599-android.png"
 #  image_path_ios: "assets/images/icon-710x599-ios.png"
   android: true # can specify file name here e.g. "ic_launcher"
@@ -64,6 +64,21 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  fonts:
+    - family: EmojiOne
+      fonts:
+        - asset: assets/fonts/emojione-android.ttf
+    - family: TwitterColorEmoji
+      fonts:
+        - asset: assets/fonts/TwitterColorEmoji-SVGinOT.ttf
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto-Regular.ttf
+        - asset: assets/fonts/Roboto-Italic.ttf
+          style: italic
+        - asset: assets/fonts/Roboto-Bold.ttf
+          weight: 700
+
 
   # To add assets to your application, add an assets section, like this:
   # assets:

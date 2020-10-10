@@ -13,14 +13,12 @@ import 'package:web_socket_channel/status.dart' as status;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:shaper_app/providers/config.dart';
+import 'package:shaper_app/data/streams.dart';
 
 class NetworkMod with ChangeNotifier {
   ConfigMod configMod;
   var channel;
   var connected = false;
-
-  // StreamController<Map<String, dynamic>> gameStreamController;
-  final gameStreamController = StreamController<Map<String, dynamic>>();
 
   Future<void> closeGameStreamController() async {
     try {
@@ -28,12 +26,20 @@ class NetworkMod with ChangeNotifier {
     } on Exception catch (_) {
       print('could not close gameStreamController');
     }
+
+    // reset
+    gameStreamController = StreamController<Map<String, dynamic>>();
   }
 
-  @override
-  void dispose() {
-    closeGameStreamController();
-    super.dispose();
+  Future<void> closeChatMessageStreamController() async {
+    try {
+      chatMessageStreamController.close();
+    } on Exception catch (_) {
+      print('could not close chatMessageStreamController');
+    }
+
+    // reset
+    chatMessageStreamController = StreamController<ChatMessage>();
   }
 
   NetworkMod() {
@@ -44,10 +50,7 @@ class NetworkMod with ChangeNotifier {
     final Map<String, dynamic> data = json.decode(message);
     if (data.containsKey('game data')) {
       gameStreamController.sink.add(data);
-    }
-
-    // gameStreamController.sink.add(data);
-    else if (data.containsKey('type')) {
+    } else if (data.containsKey('type')) {
       switch (data['type']) {
         //
         // When the user sends the "join" action, he provides a name.
@@ -74,9 +77,27 @@ class NetworkMod with ChangeNotifier {
 
   void disconnect() async {
     print('disconnecting');
-    await channel.sink.add('{"action":"disconnect"}');
-    await closeGameStreamController();
-    await channel.sink.close(status.normalClosure);
+
+    try {
+      await channel.sink.add('{"action":"disconnect"}');
+    } catch (e) {
+      print(e);
+    }
+    try {
+      await closeChatMessageStreamController();
+    } catch (e) {
+      print(e);
+    }
+    try {
+      await closeGameStreamController();
+    } catch (e) {
+      print(e);
+    }
+    try {
+      await channel.sink.close(status.normalClosure);
+    } catch (e) {
+      print(e);
+    }
     connected = false;
     channel = null;
     notifyListeners();
@@ -87,8 +108,6 @@ class NetworkMod with ChangeNotifier {
       print('connected already');
       return false;
     }
-
-    print('not connected, will try to connect');
 
     // TODO: change the address to a set up server
 
@@ -135,7 +154,6 @@ class NetworkMod with ChangeNotifier {
         });
       } else if (myWebSocketChannel == 'WebSocketChannel') {
         // await WebSocket.connect(myWebSocketAddress).then((ws) {
-        //   print('CHROME connected!');
         //   // channel = WebSocketChannel(ws);
         //   ws.close();
         //   print('CHROME WS CLOSED. WILL TRY RECONNECT');
@@ -152,7 +170,7 @@ class NetworkMod with ChangeNotifier {
         return false;
       }
     } catch (e) {
-      print("Error! can not connect WebSocket " + e.toString());
+      print("Error! cannot connect WebSocket " + e.toString());
       connected = false;
       return false;
     }
@@ -172,10 +190,8 @@ class NetworkMod with ChangeNotifier {
       connected = false;
       return false;
     }, onError: (e) async {
-      print('server error: $e');
-      connected = false;
-      await channel.sink.close();
-      channel = null;
+      print('server error on channel.stream.listen: $e');
+      disconnect();
       return false;
     }, cancelOnError: true);
 

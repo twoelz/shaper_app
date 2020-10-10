@@ -17,6 +17,15 @@ class ConfigMod with ChangeNotifier {
   Map<String, dynamic> expMap;
   Map<String, dynamic> sMsgMap;
 
+  bool showNetConfig = false;
+
+  void toggleShowNetConfig() {
+    print('running toggleShowNetConfig in ConfigMod');
+    showNetConfig = !showNetConfig;
+    print('new showNetConfig setting: $showNetConfig');
+    notifyListeners();
+  }
+
   void setServerConfigs(exp, sMsg) async {
     expMap = await json.decode(exp);
     expMapString = expMap.toString();

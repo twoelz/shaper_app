@@ -5,39 +5,21 @@ import 'package:flutter/material.dart';
 import 'package:shaper_app/main.dart';
 import 'package:shaper_app/providers/network.dart';
 import 'package:shaper_app/screens/game_screen.dart';
-
-class ChatMessage {
-  final String text;
-  final int senderNumber;
-  final String senderName;
-  final bool sameSender;
-  ChatMessage({this.text, this.senderNumber, this.senderName, this.sameSender});
-}
+import 'package:shaper_app/data/streams.dart';
 
 class ClientMod with ChangeNotifier {
   NetworkMod networkMod;
 
   // chat variables
   String chatMessageText;
-  StreamController<ChatMessage> chatMessageStreamController =
-      StreamController();
-  Stream get chatMessageStream => chatMessageStreamController.stream;
+
+  // Stream get chatMessageStream => chatMessageStreamController.stream;
   List<ChatMessage> _chatMessages = [];
   List<ChatMessage> get chatMessages => _chatMessages;
-
-  @override
-  void dispose() {
-    chatMessageStreamController.close();
-    chatMessageStreamController = StreamController();
-    super.dispose();
-  }
 
   // network methods
   void connect() async {
     await networkMod.connect(confirmConnected);
-    // if (connected) {
-    //   await confirmConnected();
-    // }
   }
 
   Future<void> confirmConnected() async {
@@ -46,27 +28,22 @@ class ClientMod with ChangeNotifier {
       // TODO: make sure connected is not true anywhere etc
       return;
     }
-    if (networkMod.connected) {
-      if (!networkMod.gameStreamController.hasListener) {
-        print('start listening');
-        networkMod.gameStreamController.stream.listen((data) {
-          consumeGameData(data);
-        }, onDone: () {
-          print('Task Done');
-          return;
-        }, onError: (error) {
-          print("Error in consumeGameData: $error");
-          // TODO: do stuff to disconnect if needed
-          disconnect();
-          return;
-        }, cancelOnError: true);
-      }
-      print('moving navigator now');
-      navigatorKey.currentState.pushNamed(GameScreen.id);
-    } else {
-      print('gameStream has already been listened to');
+    print('start listening');
+    gameStreamController.stream.listen((data) {
+      consumeGameData(data);
+    }, onDone: () {
+      print('Task Done');
       return;
-    }
+    }, onError: (error) {
+      print("Error in consumeGameData: $error");
+      // TODO: do stuff to disconnect if needed
+      disconnect();
+      return;
+    }, cancelOnError: true);
+    print('moving navigator now');
+    // TODO: check if it has a gameID, if yes, check if same ID, if yes, reset chat data
+
+    navigatorKey.currentState.pushNamed(GameScreen.id);
   }
 
   void consumeGameData(data) async {

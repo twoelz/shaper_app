@@ -6,6 +6,7 @@ import 'package:universal_io/io.dart' show Platform;
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 
 import 'package:shaper_app/providers/config.dart';
+import 'package:shaper_app/data/streams.dart';
 
 const kSendButtonTextStyle = TextStyle(
   color: Colors.lightBlueAccent,
@@ -77,6 +78,7 @@ class ChatFrame extends StatelessWidget {
                     onChanged: (value) {
                       context.read<ClientMod>().chatMessageText = value;
                     },
+                    style: emojiFallbackTextStyle(context),
                     decoration: kMessageTextFieldDecoration,
                   ),
                 ),
@@ -178,17 +180,15 @@ class MessageBubble extends StatelessWidget {
                           'P${senderNumber + 1} $senderName',
                           textAlign: TextAlign.left,
                           style: TextStyle(
-                            color: senderColors[
-                                senderNumber % senderColors.length],
-                          ),
+                                  color: senderColors[
+                                      senderNumber % senderColors.length])
+                              .merge(emojiFallbackTextStyle(context)),
                         ),
                   Text(
                     text,
                     style: TextStyle(
-                      // use commented version below to set different colors.
-                      // color: isMe ? Colors.black : Colors.black,
                       color: Colors.black,
-                    ),
+                    ).merge(emojiFallbackTextStyle(context)),
                   ),
                 ],
               ),
@@ -200,12 +200,22 @@ class MessageBubble extends StatelessWidget {
   }
 }
 
+TextStyle emojiFallbackTextStyle(ctx) {
+  if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
+    return TextStyle(
+      fontFamily: DefaultTextStyle.of(ctx).style.fontFamily,
+      fontFamilyFallback: ['EmojiOne']
+        ..addAll(DefaultTextStyle.of(ctx).style.fontFamilyFallback),
+    );
+  }
+  return TextStyle();
+}
+
 class MessagesStream extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<ChatMessage>(
-      stream:
-          context.select((ClientMod clientMod) => clientMod.chatMessageStream),
+      stream: chatMessageStreamController.stream,
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return Center(

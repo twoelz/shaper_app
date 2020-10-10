@@ -89,7 +89,6 @@ class MyConfigTable extends StatelessWidget {
   }
 
   void _setIpDefault(ctx) async {
-    print('setting IP default');
     SharedPreferences prefs = await SharedPreferences.getInstance();
     Provider.of<ConfigMod>(ctx, listen: false)
         .setIp(prefs.getString('defaultIp'));
@@ -125,8 +124,6 @@ class MyConfigTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool showNetConfig = true;
-
     return Table(
         defaultVerticalAlignment: TableCellVerticalAlignment.baseline,
         border: TableBorder.all(color: Colors.black26, width: 2),
@@ -181,7 +178,7 @@ class MyConfigTable extends StatelessWidget {
               ),
             ),
           ]),
-          showNetConfig
+          context.watch<ConfigMod>().showNetConfig
               ? TableRow(children: [
                   Padding(
                     padding: const EdgeInsets.only(left: 5),
@@ -227,7 +224,7 @@ class MyConfigTable extends StatelessWidget {
                   ),
                 ])
               : TableRow(children: emptyCells),
-          showNetConfig
+          context.watch<ConfigMod>().showNetConfig
               ? TableRow(children: [
                   Padding(
                     padding: const EdgeInsets.only(left: 5),
@@ -290,13 +287,15 @@ class ConnectButtonRow extends StatelessWidget {
           SizedBox(
             width: 150,
           ),
+          AdvancedSettingsButton(),
+          // TODO: Advanced Settings
         ]);
   }
 }
 
 class DisconnectButton extends StatelessWidget {
   void _disconnect(ctx) {
-    Provider.of<NetworkMod>(ctx, listen: false).disconnect();
+    Provider.of<ClientMod>(ctx, listen: false).disconnect();
   }
 
   @override
@@ -350,6 +349,43 @@ class ConnectButton extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Text(
               "Connect",
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class AdvancedSettingsButton extends StatelessWidget {
+  void _advancedSettingsToggle(ctx) {
+    Provider.of<ConfigMod>(ctx, listen: false).toggleShowNetConfig();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FlatButton(
+      color: Colors.black26,
+      onPressed: () => _advancedSettingsToggle(context),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: context.watch<ConfigMod>().showNetConfig
+                ? Icon(
+                    Icons.remove_circle,
+                    color: Colors.white,
+                  )
+                : Icon(
+                    Icons.settings,
+                    color: Colors.white,
+                  ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Text(
+              "Settings",
             ),
           ),
         ],
