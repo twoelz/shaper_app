@@ -195,9 +195,6 @@ class NetworkMod with ChangeNotifier {
       return false;
     }, cancelOnError: true);
 
-    print('still connected?');
-    print('connected: $connected');
-
     if (connected) {
       print('sending player name to server');
       // connected now. send name
@@ -209,6 +206,6 @@ class NetworkMod with ChangeNotifier {
   }
 
   void sendChatMessageToServer(String message) async {
-    await channel.sink.add('{"action":"chat", "chat":"$message"}');
+    await channel.sink.add('__chat__$message');
   }
 }

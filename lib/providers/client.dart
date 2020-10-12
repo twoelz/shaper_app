@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert' show HtmlEscape;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:shaper_app/main.dart';
 import 'package:shaper_app/providers/network.dart';
 import 'package:shaper_app/screens/game_screen.dart';
 import 'package:shaper_app/data/streams.dart';
+import 'package:string_validator/string_validator.dart';
 
 class ClientMod with ChangeNotifier {
   NetworkMod networkMod;

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'package:universal_io/io.dart' show Platform;
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
+// import 'package:emoji_picker/emoji_picker.dart';
 
 import 'package:shaper_app/providers/config.dart';
 import 'package:shaper_app/data/streams.dart';
@@ -61,6 +62,16 @@ class ChatFrame extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           MessagesStream(),
+          // EmojiPicker(
+          //   rows: 3,
+          //   columns: 7,
+          //   buttonMode: ButtonMode.MATERIAL,
+          //   recommendKeywords: ["racing", "horse"],
+          //   numRecommended: 10,
+          //   onEmojiSelected: (emoji, category) {
+          //     print(emoji);
+          //   },
+          // ),
           Container(
             decoration: kMessageContainerDecoration,
             child: Row(
@@ -82,6 +93,16 @@ class ChatFrame extends StatelessWidget {
                     decoration: kMessageTextFieldDecoration,
                   ),
                 ),
+                // EmojiPicker(
+                //   rows: 3,
+                //   columns: 7,
+                //   buttonMode: ButtonMode.MATERIAL,
+                //   recommendKeywords: ["racing", "horse"],
+                //   numRecommended: 10,
+                //   onEmojiSelected: (emoji, category) {
+                //     print(emoji);
+                //   },
+                // ),
                 FlatButton(
                   // onPressed: () => _sendMessage(context),
                   onPressed: () {
@@ -203,10 +224,9 @@ class MessageBubble extends StatelessWidget {
 TextStyle emojiFallbackTextStyle(ctx) {
   if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
     return TextStyle(
-      fontFamily: DefaultTextStyle.of(ctx).style.fontFamily,
-      fontFamilyFallback: ['EmojiOne']
-        ..addAll(DefaultTextStyle.of(ctx).style.fontFamilyFallback),
-    );
+        fontFamily: DefaultTextStyle.of(ctx).style.fontFamily,
+        fontFamilyFallback: ['EmojiOne']
+          ..addAll(DefaultTextStyle.of(ctx).style.fontFamilyFallback));
   }
   return TextStyle();
 }
