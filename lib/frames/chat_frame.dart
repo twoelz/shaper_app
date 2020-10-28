@@ -45,11 +45,14 @@ class ChatFrame extends StatelessWidget {
   //   chatFocusNode.requestFocus();
   // }
 
+  // @override
+
   @override
   Widget build(BuildContext context) {
     if (Platform.isAndroid || Platform.isIOS) {
       // flutter_keyboard_visibility: makes sure chat gets focus
       // TODO: check if I have to dispose of onChange at any point
+      // TODO: probably needs a subscribe and then cancel it?
       KeyboardVisibility.onChange.listen((bool visible) {
         if (visible) {
           chatFocusNode.requestFocus();
@@ -238,9 +241,7 @@ class MessagesStream extends StatelessWidget {
       stream: chatMessageStreamController.stream,
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return Center(
-              // TODO: check if other option is better here. Maybe Placeholder
-              );
+          return Center();
         }
         List<ChatMessage> messages =
             context.select((ClientMod clientMod) => clientMod.chatMessages);

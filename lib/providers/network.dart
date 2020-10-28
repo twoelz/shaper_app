@@ -12,6 +12,10 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:battery_plus/battery_plus.dart';
+import 'package:uuid/uuid.dart';
+
 import 'package:shaper_app/providers/config.dart';
 import 'package:shaper_app/data/streams.dart';
 
@@ -19,6 +23,20 @@ class NetworkMod with ChangeNotifier {
   ConfigMod configMod;
   var channel;
   var connected = false;
+  var internetConnected = false;
+  var internetConnectionType = 'wifi'; // either wifi or mobile
+
+  // TODO: use vars below
+  var lookingForPublicServerAnnouncement = false;
+  var lookingForPrivateServerAnnouncement = false;
+  var stopLookingForPublicServerAnnouncement = false;
+  var stopLookingForPrivateServerAnnouncement = false;
+
+  // battery vars
+  BatteryState batteryState;
+  var batteryStateSubscription;
+
+  final uniqueId = Uuid().v4();
 
   Future<void> closeGameStreamController() async {
     try {
@@ -43,7 +61,90 @@ class NetworkMod with ChangeNotifier {
   }
 
   NetworkMod() {
+    if (Platform.isAndroid || Platform.isIOS || kIsWeb) {
+      // TODO: subscribe to listen internet connectivity
+      print('should subscribe to check internet');
+    } else {
+      Timer(const Duration(seconds: 10), () => checkInternet(null));
+    }
     // TODO: check if this is needed (and if not, what use this is)
+    checkInternet(null);
+    // Timer(const Duration(seconds: 1), () => findInternetServer());
+    if (!Platform.isLinux) {
+      try {
+        batteryStateSubscription =
+            battery.onBatteryStateChanged.listen((BatteryState state) {
+          batteryState = state;
+          notifyListeners();
+        });
+      } catch (e) {
+        print('could not listen to battery state changed');
+        print(e);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    // TODO: check if this cancel works and if the subscription can be used again
+    if (!Platform.isLinux) {
+      try {
+        batteryStateSubscription.cancel();
+      } catch (e) {
+        print('could not cancel subscription to listen battery state changed');
+        print(e);
+      }
+    }
+  }
+
+  void findInternetServer() {
+    print('looking for server');
+    // TODO: find the server
+  }
+
+  void checkInternet(ConnectivityResult result) async {
+    // try {
+    //   final result = await InternetAddress.lookup('google.com');
+    //   if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+    //     internetConnected = true;
+    //     print('internet is connected');
+    //   }
+    // } on SocketException catch (_) {
+    //   print('internet is not connected');
+    //   internetConnected = false;
+    // }
+
+    if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
+      internetConnectionType = 'wifi';
+      try {
+        final result = await InternetAddress.lookup('google.com');
+        if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+          internetConnected = true;
+          print('internet is connected');
+        }
+      } on SocketException catch (_) {
+        print('internet is not connected');
+        internetConnected = false;
+      }
+    } else {
+      var connectivityResult =
+          result ?? await (Connectivity().checkConnectivity());
+
+      if (connectivityResult == ConnectivityResult.none) {
+        internetConnected = false;
+      } else {
+        internetConnected = true;
+      }
+
+      if (connectivityResult == ConnectivityResult.mobile) {
+        internetConnectionType = 'mobile';
+      } else if (connectivityResult == ConnectivityResult.wifi) {
+        internetConnectionType = 'wifi';
+      }
+    }
+
+    notifyListeners();
   }
 
   void consume(message) {
@@ -98,12 +199,16 @@ class NetworkMod with ChangeNotifier {
     } catch (e) {
       print(e);
     }
+
     connected = false;
     channel = null;
     notifyListeners();
   }
 
-  Future<void> connect(Function confirmConnectedCallback) async {
+  Future<void> connect(Function confirmConnectedCallback,
+      Function connectionFailedCallback) async {
+    // Wakelock.enable();
+
     if (connected) {
       print('connected already');
       return false;
@@ -147,13 +252,30 @@ class NetworkMod with ChangeNotifier {
     }
 
     try {
+      print('myWebSocketAddress: $myWebSocketAddress');
       if (myWebSocketChannel == 'IOWebSocketChannel') {
-        await WebSocket.connect(myWebSocketAddress).then((ws) {
+        await WebSocket.connect(
+          '$myWebSocketAddress/',
+        ).then((ws) {
           channel = IOWebSocketChannel(ws);
           confirmConnectedCallback();
+        }).catchError((e) {
+          print("Error connecting"); // Finally, callback fires.
+          connectionFailedCallback(e);
+          return;
         });
-      } else if (myWebSocketChannel == 'WebSocketChannel') {
+
+        print("SHOULD NOT PRINT THIS");
+
         // await WebSocket.connect(myWebSocketAddress).then((ws) {
+        //   channel = IOWebSocketChannel(ws);
+        //   confirmConnectedCallback();
+        // });
+
+        // channel = IOWebSocketChannel.connect(myWebSocketAddress);
+        // Timer(const Duration(seconds: 5), () => confirmConnectedCallback());
+      } else if (myWebSocketChannel == 'WebSocketChannel') {
+        //  WebSocket.connect(myWebSocketAddress).then((ws) {
         //   // channel = WebSocketChannel(ws);
         //   ws.close();
         //   print('CHROME WS CLOSED. WILL TRY RECONNECT');
@@ -163,7 +285,7 @@ class NetworkMod with ChangeNotifier {
 
         channel = WebSocketChannel.connect(Uri.parse(myWebSocketAddress));
 
-        new Timer(const Duration(seconds: 2), () => confirmConnectedCallback());
+        Timer(const Duration(seconds: 2), () => confirmConnectedCallback());
       } else {
         print('Error! Unknown WebSocketChannel type: $myWebSocketChannel');
         connected = false;
@@ -172,10 +294,10 @@ class NetworkMod with ChangeNotifier {
     } catch (e) {
       print("Error! cannot connect WebSocket " + e.toString());
       connected = false;
+      // throw (e);
       return false;
     }
     notifyListeners();
-    print('so far it seems to have connected. waiting for the callback now');
   }
 
   Future<bool> confirmConnected() async {
@@ -199,7 +321,8 @@ class NetworkMod with ChangeNotifier {
       print('sending player name to server');
       // connected now. send name
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      await channel.sink.add(prefs.getString('playerName'));
+      await channel.sink
+          .add(jsonEncode([prefs.getString('playerName'), uniqueId]));
     }
     notifyListeners();
     return connected;

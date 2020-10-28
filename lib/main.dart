@@ -1,31 +1,48 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'package:universal_io/io.dart' show Platform;
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
+import 'package:wakelock/wakelock.dart';
 
 import 'package:shaper_app/providers/config.dart';
 import 'package:shaper_app/providers/network.dart';
 import 'package:shaper_app/providers/client.dart';
 import 'package:shaper_app/screens/config_info_screen.dart';
 import 'package:shaper_app/screens/connect_screen.dart';
+import 'package:shaper_app/screens/wait_connect_screen.dart';
 import 'package:shaper_app/screens/game_screen.dart';
-// TODO: remove this import below (shared_preferences)
-import 'package:shared_preferences/shared_preferences.dart';
+// TODO: remove this import below on release (shared_preferences)
+// import 'package:shared_preferences/shared_preferences.dart';
 
-// for navigation without context: start_
+// for navigation without context
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-// _end
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // TODO remove clear here
-  final pref = await SharedPreferences.getInstance();
-  await pref.clear();
+  if (Platform.isIOS || Platform.isAndroid || kIsWeb) {
+    Wakelock.enable();
+    // Wakelock was only supported on those Platforms
+  }
+
+  print('SHAPER_EXPERIMENTER:');
+  print(Platform.environment['SHAPER_EXPERIMENTER']);
+  print('SHAPER_ANNOUNCE_IP_BIN:');
+  print(Platform.environment['SHAPER_ANNOUNCE_IP_BIN']);
+  print('SHAPER_ANNOUNCE_IP_KEY:');
+  print(Platform.environment['SHAPER_ANNOUNCE_IP_KEY']);
+
+  // // clear preferences for testing fresh install
+  // final pref = await SharedPreferences.getInstance();
+  // await pref.clear();
 
   await setDefaults();
+  // TODO: uncomment setAnnouncedDefaults on release
+  // await setAnnouncedDefaults();
   runApp(MyApp());
 }
 
@@ -33,10 +50,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Set landscape orientation
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
+    // SystemChrome.setPreferredOrientations([
+    //   DeviceOrientation.landscapeLeft,
+    //   DeviceOrientation.landscapeRight,
+    // ]);
     return ChangeNotifierProvider<ConfigMod>(
       create: (context) => ConfigMod(),
       lazy: false,
@@ -60,10 +77,6 @@ class MyApp extends StatelessWidget {
 }
 
 class MobileVersionApp extends StatelessWidget {
-  // const MyMobileMaterialApp({
-  //   Key key,
-  // }) : super(key: key);
-
   // it just adds a way to tap out of keyboard
   @override
   Widget build(BuildContext context) {
@@ -72,10 +85,6 @@ class MobileVersionApp extends StatelessWidget {
 }
 
 class RegularApp extends StatelessWidget {
-  // const MyMaterialApp({
-  //   Key key,
-  // }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -103,6 +112,7 @@ class RegularApp extends StatelessWidget {
         ConnectScreen.id: (context) => ConnectScreen(),
         ConfigInfoScreen.id: (context) => ConfigInfoScreen(),
         GameScreen.id: (context) => GameScreen(),
+        WaitConnectScreen.id: (context) => WaitConnectScreen(),
       },
     );
   }

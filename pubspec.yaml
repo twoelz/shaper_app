@@ -18,7 +18,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.7.0 <3.0.0"
+  sdk: ">=2.11.0-218.0.dev <3.0.0"
 
 dependencies:
   flutter:
@@ -36,8 +36,13 @@ dependencies:
   shared_preferences: ^0.5.10
   string_validator: ^0.1.4
   flutter_keyboard_visibility: ^3.2.2
-  emoji_picker: ^0.1.0
-#  global_configuration: ^1.6.0
+  wakelock: ^0.2.1
+  connectivity_plus: ^0.5.0
+  auto_size_text: ^2.1.0
+  auto_size_text_field: ^0.1.6
+  battery_plus: ^0.8.0
+  uuid: ^2.2.2
+
 
 dev_dependencies:
   flutter_test:

@@ -1,9 +1,12 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:string_validator/string_validator.dart';
+// import 'package:http/http.dart';
+import 'package:http/http.dart' as http;
 
 class ConfigMod with ChangeNotifier {
   String ip = '';
@@ -11,18 +14,21 @@ class ConfigMod with ChangeNotifier {
   String playerName = '';
   int playerNumber = 0;
 
+  String privateBin = '';
+  String privateKey = '';
+
+  String publicBin = '';
+
   dynamic expMapString = '';
   dynamic sMsgMapString = '';
 
   Map<String, dynamic> expMap;
   Map<String, dynamic> sMsgMap;
 
-  bool showNetConfig = false;
+  bool showNetConfig = true;
 
   void toggleShowNetConfig() {
-    print('running toggleShowNetConfig in ConfigMod');
     showNetConfig = !showNetConfig;
-    print('new showNetConfig setting: $showNetConfig');
     notifyListeners();
   }
 
@@ -146,3 +152,75 @@ Future setDefaults() async {
       prefs.getString('playerName') ?? prefs.getString('defaultPlayerName');
   await prefs.setString('playerName', playerName);
 }
+
+Future setAnnouncedDefaults() async {
+  print('got into setAnnounceDefaults');
+  // network defaults
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+
+  const String hardCodedPublicBin = '5f8da6707243cd7e82510e39';
+  // change it if the accepted hardcoded Public Bin from server changed number
+
+  // only use hardCoded if not previously set.
+  // this allows overwrite of hardcoded bin after first connection to server
+  String defaultPublicBin =
+      prefs.getString('defaultPublicBin') ?? hardCodedPublicBin;
+  await prefs.setString('defaultPublicBin', defaultPublicBin);
+
+  if (prefs.getString('publicBin') == null) {
+    await prefs.setString('publicBin', defaultPublicBin);
+  }
+
+  final publicAnnounceUrl =
+      'https://api.jsonbin.io/v3/b/${prefs.getString('publicBin')}/latest';
+  print('publicAnnounceUrl: $publicAnnounceUrl');
+
+  var responseJsonReceived = false;
+
+  try {
+    final response = await http.get(
+      publicAnnounceUrl,
+      headers: {},
+    );
+    final responseJson = jsonDecode(response.body);
+    print('responseJson:');
+    print(responseJson);
+    responseJsonReceived = true;
+  } on SocketException catch (e) {
+    print(e);
+  } catch (e) {
+    print(e);
+  }
+
+  if (!responseJsonReceived) {
+    // TODO: display a warning dialog
+    print("Couldn't get server information online");
+  }
+
+  // PRINTED:
+  // {record: {ip: 213.127.44.103,
+  //           port: 8766},
+  //  metadata: {id: 5f87b0d7302a837e95796d8b,
+  //             private: true,
+  //             createdAt: 2020-10-15T02:15:51.363Z,
+  //             collectionId: 5f86fdea7243cd7e824f255d}}
+
+  // String myUrl =
+
+  // String ip = prefs.getString('ip') ?? prefs.getString('defaultIp');
+  // await prefs.setString('ip', ip);
+  //
+  // String port = prefs.getString('port') ?? prefs.getString('defaultPort');
+  // await prefs.setString('port', port);
+  //
+  // // game defaults
+  // await prefs.setString('defaultPlayerName', 'player');
+  // String playerName =
+  //     prefs.getString('playerName') ?? prefs.getString('defaultPlayerName');
+  // await prefs.setString('playerName', playerName);
+}
+
+const String publicJsonBin = '';
+
+// const String encryptkey =
+//     'DTvhX6PLzfd63UKKRzYSMJMhMM3ixLq8Rs3p8Yg8sis9rzNehud0WpEDji2izMtIudGEMXSY5JWVJ8HN';

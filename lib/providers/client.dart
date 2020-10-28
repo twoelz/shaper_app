@@ -1,13 +1,14 @@
 import 'dart:async';
-import 'dart:convert' show HtmlEscape;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shaper_app/main.dart';
 import 'package:shaper_app/providers/network.dart';
+import 'package:shaper_app/screens/connect_screen.dart';
+import 'package:shaper_app/screens/wait_connect_screen.dart';
 import 'package:shaper_app/screens/game_screen.dart';
 import 'package:shaper_app/data/streams.dart';
-import 'package:string_validator/string_validator.dart';
+// import 'package:string_validator/string_validator.dart';
 
 class ClientMod with ChangeNotifier {
   NetworkMod networkMod;
@@ -21,13 +22,28 @@ class ClientMod with ChangeNotifier {
 
   // network methods
   void connect() async {
-    await networkMod.connect(confirmConnected);
+    navigatorKey.currentState.pushNamed(WaitConnectScreen.id);
+    await networkMod.connect(confirmConnected, connectionFailed);
+  }
+
+  Future<void> connectionFailed(e) async {
+    print('running connection Failed');
+    print('$e');
+    navigatorKey.currentState.pop();
+    navigatorKey.currentState.pushNamed(ConnectScreen.id);
+    showDialog(
+        context: navigatorKey.currentContext,
+        builder: (context) => AlertDialog(
+              title: Text("Connection Error"),
+              content: Text("$e"),
+            ));
   }
 
   Future<void> confirmConnected() async {
+    print('running confirm Connected');
+    navigatorKey.currentState.pop();
     final bool connected = await networkMod.confirmConnected();
     if (!connected) {
-      // TODO: make sure connected is not true anywhere etc
       return;
     }
     print('start listening');
@@ -38,12 +54,11 @@ class ClientMod with ChangeNotifier {
       return;
     }, onError: (error) {
       print("Error in consumeGameData: $error");
-      // TODO: do stuff to disconnect if needed
       disconnect();
       return;
     }, cancelOnError: true);
     print('moving navigator now');
-    // TODO: check if it has a gameID, if yes, check if same ID, if yes, reset chat data
+    // TODO: check if it has a gameID, if yes, check if same ID, if not, reset chat data
 
     navigatorKey.currentState.pushNamed(GameScreen.id);
   }
