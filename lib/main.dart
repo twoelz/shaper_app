@@ -42,7 +42,7 @@ void main() async {
 
   await setDefaults();
   // TODO: uncomment setAnnouncedDefaults on release
-  // await setAnnouncedDefaults();
+  await setAnnouncedDefaults();
   runApp(MyApp());
 }
 
@@ -107,6 +107,7 @@ class RegularApp extends StatelessWidget {
       // for navigation without context: start_
       navigatorKey: navigatorKey,
       // _end
+      // initialRoute: ConnectScreen.id,
       initialRoute: ConnectScreen.id,
       routes: {
         ConnectScreen.id: (context) => ConnectScreen(),

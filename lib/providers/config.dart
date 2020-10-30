@@ -25,7 +25,7 @@ class ConfigMod with ChangeNotifier {
   Map<String, dynamic> expMap;
   Map<String, dynamic> sMsgMap;
 
-  bool showNetConfig = true;
+  bool showNetConfig = false;
 
   void toggleShowNetConfig() {
     showNetConfig = !showNetConfig;
@@ -158,13 +158,13 @@ Future setAnnouncedDefaults() async {
   // network defaults
   SharedPreferences prefs = await SharedPreferences.getInstance();
 
-  const String hardCodedPublicBin = '5f8da6707243cd7e82510e39';
+  // const String hardCodedPublicJsonBin defined at the end of file
   // change it if the accepted hardcoded Public Bin from server changed number
 
   // only use hardCoded if not previously set.
   // this allows overwrite of hardcoded bin after first connection to server
   String defaultPublicBin =
-      prefs.getString('defaultPublicBin') ?? hardCodedPublicBin;
+      prefs.getString('defaultPublicBin') ?? hardCodedPublicJsonBin;
   await prefs.setString('defaultPublicBin', defaultPublicBin);
 
   if (prefs.getString('publicBin') == null) {
@@ -220,7 +220,4 @@ Future setAnnouncedDefaults() async {
   // await prefs.setString('playerName', playerName);
 }
 
-const String publicJsonBin = '';
-
-// const String encryptkey =
-//     'DTvhX6PLzfd63UKKRzYSMJMhMM3ixLq8Rs3p8Yg8sis9rzNehud0WpEDji2izMtIudGEMXSY5JWVJ8HN';
+const String hardCodedPublicJsonBin = '5f8da6707243cd7e82510e39';

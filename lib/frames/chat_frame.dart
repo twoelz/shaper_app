@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 
 import 'package:universal_io/io.dart' show Platform;
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
-// import 'package:emoji_picker/emoji_picker.dart';
 
 import 'package:shaper_app/providers/config.dart';
 import 'package:shaper_app/data/streams.dart';
@@ -31,21 +30,18 @@ final chatMessageTextController = TextEditingController();
 final chatFocusNode = FocusNode();
 
 class ChatFrame extends StatelessWidget {
-  // void _sendMessage_to_self(ctx) {
-  //   // Note: cannot use ctx.read must use Provider.of
-  //   chatMessageTextController.clear();
-  //   Provider.of<ClientMod>(ctx, listen: false).chatMessageStreamController.add(
-  //     ChatMessage(
-  //         text: Provider.of<ClientMod>(ctx, listen: false).chatMessageText,
-  //         senderNumber:
-  //         Provider.of<ConfigMod>(ctx, listen: false).playerNumber,
-  //         senderName:
-  //         Provider.of<ConfigMod>(ctx, listen: false).playerName),
-  //   );
-  //   chatFocusNode.requestFocus();
-  // }
-
-  // @override
+  void _sendChatMessage(ctx) {
+    Provider.of<ClientMod>(ctx, listen: false).sendChatMessage();
+    chatMessageTextController.clear();
+    if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
+      chatFocusNode.requestFocus();
+    } else {
+      FocusScopeNode currentFocus = FocusScope.of(ctx);
+      if (!currentFocus.hasPrimaryFocus) {
+        currentFocus.unfocus();
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -92,36 +88,13 @@ class ChatFrame extends StatelessWidget {
                     onChanged: (value) {
                       context.read<ClientMod>().chatMessageText = value;
                     },
+                    onSubmitted: (value) => _sendChatMessage(context),
                     style: emojiFallbackTextStyle(context),
                     decoration: kMessageTextFieldDecoration,
                   ),
                 ),
-                // EmojiPicker(
-                //   rows: 3,
-                //   columns: 7,
-                //   buttonMode: ButtonMode.MATERIAL,
-                //   recommendKeywords: ["racing", "horse"],
-                //   numRecommended: 10,
-                //   onEmojiSelected: (emoji, category) {
-                //     print(emoji);
-                //   },
-                // ),
-                FlatButton(
-                  // onPressed: () => _sendMessage(context),
-                  onPressed: () {
-                    context.read<ClientMod>().sendChatMessage();
-                    chatMessageTextController.clear();
-                    if (Platform.isLinux ||
-                        Platform.isWindows ||
-                        Platform.isMacOS) {
-                      chatFocusNode.requestFocus();
-                    } else {
-                      FocusScopeNode currentFocus = FocusScope.of(context);
-                      if (!currentFocus.hasPrimaryFocus) {
-                        currentFocus.unfocus();
-                      }
-                    }
-                  },
+                TextButton(
+                  onPressed: () => _sendChatMessage(context),
                   child: Text(
                     'Send',
                     style: kSendButtonTextStyle,
@@ -150,15 +123,16 @@ class MessageBubble extends StatelessWidget {
   final bool isMe;
   final bool sameSender;
 
-  static const List<Color> senderColors = [
-    Colors.red,
-    Colors.green,
-    Colors.purple,
-    Colors.orange,
-    Colors.indigo,
-    Colors.pink,
-    Colors.teal,
-    Colors.amber,
+  final List<Color> senderColors = [
+    Colors.red[900],
+    Colors.green[900],
+    Colors.purple[800],
+    Colors.indigo[900],
+    Colors.pink[900],
+    Colors.teal[900],
+    Colors.blueGrey[900],
+    Colors.brown[900],
+    Colors.grey[900],
   ];
 
   @override
@@ -169,13 +143,6 @@ class MessageBubble extends StatelessWidget {
         crossAxisAlignment:
             isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: <Widget>[
-          // Text(
-          //   senderName,
-          //   style: TextStyle(
-          //     fontSize: 12.0,
-          //     color: Colors.black54,
-          //   ),
-          // ),
           Material(
             borderRadius: isMe
                 ? BorderRadius.only(
@@ -188,7 +155,7 @@ class MessageBubble extends StatelessWidget {
                     topRight: Radius.circular(30.0),
                   ),
             // elevation: 3.0,
-            color: isMe ? Colors.tealAccent : Colors.white,
+            color: isMe ? Colors.tealAccent : Colors.cyan[50],
             child: Padding(
               padding: EdgeInsets.symmetric(vertical: 6.0, horizontal: 14.0),
               child: Column(

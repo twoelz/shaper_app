@@ -7,19 +7,10 @@ import 'package:shaper_app/providers/config.dart';
 import 'package:shaper_app/providers/network.dart';
 import 'package:shaper_app/providers/client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shaper_app/widgets/layout.dart';
 
 class ConnectScreen extends StatelessWidget {
   static const String id = '/Connect';
-
-  // void rebuildAllChildren(BuildContext context) {
-  //   print('rebuilding each children now');
-  //   void rebuild(Element el) {
-  //     el.markNeedsBuild();
-  //     el.visitChildren(rebuild);
-  //   }
-  //
-  //   (context as Element).visitChildren(rebuild);
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +35,7 @@ class ConnectScreen extends StatelessWidget {
           ),
           child: Column(children: [
             MyVerticalFlexConstrainBox(
-              maxHeight: 40,
+              maxHeight: 100,
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -72,52 +63,10 @@ class ConnectScreen extends StatelessWidget {
             // ),
             ConnectButtonRow(),
             MyVerticalFlexConstrainBox(
-              maxHeight: 40,
+              maxHeight: 80,
             ),
           ]),
         ),
-      ),
-    );
-  }
-}
-
-class MyVerticalFlexConstrainBox extends StatelessWidget {
-  MyVerticalFlexConstrainBox({this.maxHeight, this.minHeight, this.child});
-  final Widget child;
-  final double maxHeight;
-  final double minHeight;
-
-  @override
-  Widget build(BuildContext context) {
-    // observe: Flexible here!
-    return Flexible(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: maxHeight,
-          minHeight: (minHeight != null) ? minHeight : 1,
-        ),
-        child: (child != null) ? child : Container(),
-      ),
-    );
-  }
-}
-
-class MyHorizontalConstrainBox extends StatelessWidget {
-  MyHorizontalConstrainBox({this.maxWidth, this.minWidth, this.child});
-  final Widget child;
-  final double maxWidth;
-  final double minWidth;
-
-  @override
-  Widget build(BuildContext context) {
-    // observe: not Flexible!
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxWidth: maxWidth,
-        minWidth: (minWidth != null) ? minWidth : 1,
-      ),
-      child: Container(
-        child: (child != null) ? child : Container(),
       ),
     );
   }
@@ -406,8 +355,7 @@ class ConnectButtonRow extends StatelessWidget {
           // ),
           context.watch<NetworkMod>().batteryState == null
               ? SizedBox.shrink()
-              // TODO: add buttons for different batterystates
-              : Text('${context.watch<NetworkMod>().batteryState}'),
+              : BatteryStatusButton(),
           MyHorizontalConstrainBox(
             // maxWidth: 50,
             maxWidth: 10,
@@ -533,11 +481,14 @@ class InternetStatusButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FlatButton(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      onPressed: context.watch<NetworkMod>().internetConnected
-          ? null
-          : () => _checkInternet(context),
+    return TextButton(
+      style: TextButton.styleFrom(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      ),
+      onPressed: () => _checkInternet(context),
+      // onPressed: context.watch<NetworkMod>().internetConnected
+      //     ? null
+      //     : () => _checkInternet(context),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -569,6 +520,74 @@ class InternetStatusButton extends StatelessWidget {
                     : Text('mobile data')
                 : Text("No internet"),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class BatteryStatusButton extends StatelessWidget {
+  Future<int> _getBatteryLevel(ctx) async {
+    final int batteryLevel =
+        await Provider.of<NetworkMod>(ctx, listen: false).getBatteryLevel();
+    return batteryLevel;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      style: TextButton.styleFrom(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      ),
+      onPressed: () async {
+        final int batteryLevel = await _getBatteryLevel(context);
+        showDialog<void>(
+          context: context,
+          builder: (_) => AlertDialog(
+            content: Text('Battery: $batteryLevel%'),
+            actions: <Widget>[
+              FlatButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              )
+            ],
+          ),
+        );
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child:
+                context.watch<NetworkMod>().batteryStateString == 'discharging'
+                    ? Icon(
+                        // should be a symbol representing battery alert
+                        Icons.battery_alert,
+                        color: Colors.black26,
+                      )
+                    : context.watch<NetworkMod>().batteryStateString == 'full'
+                        ? Icon(
+                            // should be a symbol representing battery full
+                            Icons.battery_full,
+                            color: Colors.black26,
+                          )
+                        : Icon(
+                            // should be a symbol representing battery charging
+                            Icons.battery_charging_full,
+                            color: Colors.black26,
+                          ),
+          ),
+          Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: context.watch<NetworkMod>().batteryStateString ==
+                      'discharging'
+                  ? Text('discharging')
+                  : context.watch<NetworkMod>().batteryStateString == 'full'
+                      ? Text("full")
+                      : Text('charging')),
         ],
       ),
     );

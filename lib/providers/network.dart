@@ -33,10 +33,17 @@ class NetworkMod with ChangeNotifier {
   var stopLookingForPrivateServerAnnouncement = false;
 
   // battery vars
+  Battery _battery = Battery();
   BatteryState batteryState;
   var batteryStateSubscription;
+  String batteryStateString;
+  int batteryLevel;
 
   final uniqueId = Uuid().v4();
+
+  Future<int> getBatteryLevel() async {
+    return await _battery.batteryLevel;
+  }
 
   Future<void> closeGameStreamController() async {
     try {
@@ -70,11 +77,12 @@ class NetworkMod with ChangeNotifier {
     // TODO: check if this is needed (and if not, what use this is)
     checkInternet(null);
     // Timer(const Duration(seconds: 1), () => findInternetServer());
-    if (!Platform.isLinux) {
+    if (Platform.isAndroid || Platform.isIOS) {
       try {
         batteryStateSubscription =
             battery.onBatteryStateChanged.listen((BatteryState state) {
           batteryState = state;
+          batteryStateString = batteryState.toString().split('.').last;
           notifyListeners();
         });
       } catch (e) {
