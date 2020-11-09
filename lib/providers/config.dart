@@ -1,12 +1,12 @@
 import 'dart:convert';
-import 'dart:io';
+// import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:string_validator/string_validator.dart';
 // import 'package:http/http.dart';
-import 'package:http/http.dart' as http;
+// import 'package:http/http.dart' as http;
 
 class ConfigMod with ChangeNotifier {
   String ip = '';
@@ -169,32 +169,6 @@ Future setAnnouncedDefaults() async {
 
   if (prefs.getString('publicBin') == null) {
     await prefs.setString('publicBin', defaultPublicBin);
-  }
-
-  final publicAnnounceUrl =
-      'https://api.jsonbin.io/v3/b/${prefs.getString('publicBin')}/latest';
-  print('publicAnnounceUrl: $publicAnnounceUrl');
-
-  var responseJsonReceived = false;
-
-  try {
-    final response = await http.get(
-      publicAnnounceUrl,
-      headers: {},
-    );
-    final responseJson = jsonDecode(response.body);
-    print('responseJson:');
-    print(responseJson);
-    responseJsonReceived = true;
-  } on SocketException catch (e) {
-    print(e);
-  } catch (e) {
-    print(e);
-  }
-
-  if (!responseJsonReceived) {
-    // TODO: display a warning dialog
-    print("Couldn't get server information online");
   }
 
   // PRINTED:

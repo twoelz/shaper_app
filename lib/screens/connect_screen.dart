@@ -23,49 +23,51 @@ class ConnectScreen extends StatelessWidget {
 //      appBar: AppBar(
 //        title: Text(widget.title),
 //      ),
-      body: ElevatedButtonTheme(
-        data: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(padding: EdgeInsets.zero)),
-        child: TextButtonTheme(
-          data: TextButtonThemeData(
-            style: TextButton.styleFrom(
-              primary: Colors.black,
-              padding: EdgeInsets.symmetric(horizontal: 15.0),
+      body: SafeArea(
+        child: ElevatedButtonTheme(
+          data: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(padding: EdgeInsets.zero)),
+          child: TextButtonTheme(
+            data: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                primary: Colors.black,
+                padding: EdgeInsets.symmetric(horizontal: 15.0),
+              ),
             ),
+            child: Column(children: [
+              MyVerticalFlexConstrainBox(
+                maxHeight: 100,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.people,
+                    size: Theme.of(context).textTheme.headline2.fontSize,
+                  ),
+                  Text(' Shaper', style: Theme.of(context).textTheme.headline3),
+                ],
+              ),
+              MyVerticalFlexConstrainBox(
+                maxHeight: 10,
+              ),
+              MyHorizontalConstrainBox(
+                child: MyConfigTable(),
+                maxWidth: 560,
+              ),
+              // MyConfigTable(),
+              MyVerticalFlexConstrainBox(
+                maxHeight: 40,
+              ),
+              // SizedBox(
+              //   height: 2,
+              // ),
+              ConnectButtonRow(),
+              MyVerticalFlexConstrainBox(
+                maxHeight: 80,
+              ),
+            ]),
           ),
-          child: Column(children: [
-            MyVerticalFlexConstrainBox(
-              maxHeight: 100,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.people,
-                  size: Theme.of(context).textTheme.headline2.fontSize,
-                ),
-                Text(' Shaper', style: Theme.of(context).textTheme.headline3),
-              ],
-            ),
-            MyVerticalFlexConstrainBox(
-              maxHeight: 10,
-            ),
-            MyHorizontalConstrainBox(
-              child: MyConfigTable(),
-              maxWidth: 560,
-            ),
-            // MyConfigTable(),
-            MyVerticalFlexConstrainBox(
-              maxHeight: 40,
-            ),
-            // SizedBox(
-            //   height: 2,
-            // ),
-            ConnectButtonRow(),
-            MyVerticalFlexConstrainBox(
-              maxHeight: 80,
-            ),
-          ]),
         ),
       ),
     );
@@ -136,6 +138,7 @@ class MyConfigTable extends StatelessWidget {
 
     return Table(
         defaultVerticalAlignment: TableCellVerticalAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
         border: TableBorder.all(color: Colors.black26, width: 2),
         columnWidths: {
           0: FlexColumnWidth(22),

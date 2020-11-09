@@ -8,6 +8,7 @@ class GameScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
+          // TODO: When AppBar is removed, add a SafeArea child here.
           title: Text("Game Screen"),
         ),
         body: OrientationBuilder(

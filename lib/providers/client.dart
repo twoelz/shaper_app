@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
 import 'package:shaper_app/main.dart';
 import 'package:shaper_app/providers/network.dart';
 import 'package:shaper_app/screens/connect_screen.dart';
@@ -12,6 +13,24 @@ import 'package:shaper_app/data/streams.dart';
 
 class ClientMod with ChangeNotifier {
   NetworkMod networkMod;
+
+  ClientMod() {
+    Timer(const Duration(milliseconds: 100), () => addClientModToNetworkMod());
+    // Future.delayed(Duration(milliseconds: 100)).then((value) {
+    //   addClientModToNetworkMod();
+    // });
+  }
+
+  // TODO: this may be an anti-pattern: check alternatives (see below)
+  // right now:- adding a reference for a lower provider model into a higher one
+  //  possible alternative: 1) just sending callbacks (too much boilerplate), but safer
+  //  or 2) alternatively using getIt and creating the models as services and passing them to provider as values
+  //  (don't know how bad it is to mix Provider and getIt)
+  //  or 3)
+  //  I will however change this only if program breaks or serious performance issues for now
+  void addClientModToNetworkMod() {
+    networkMod.clientMod = this;
+  }
 
   // chat variables
   String chatMessageText;
@@ -26,26 +45,32 @@ class ClientMod with ChangeNotifier {
     await networkMod.connect(confirmConnected, connectionFailed);
   }
 
-  Future<void> connectionFailed(e) async {
-    print('running connection Failed');
-    print('$e');
-    navigatorKey.currentState.pop();
-    navigatorKey.currentState.pushNamed(ConnectScreen.id);
-    showDialog(
-        context: navigatorKey.currentContext,
-        builder: (context) => AlertDialog(
-              title: Text("Connection Error"),
-              content: Text("$e"),
-            ));
-  }
-
-  Future<void> confirmConnected() async {
-    print('running confirm Connected');
-    navigatorKey.currentState.pop();
-    final bool connected = await networkMod.confirmConnected();
-    if (!connected) {
+  Future<void> connectionFailed() async {
+    if (networkMod.connectAttemptState == 'done') {
+      networkMod.connectAttemptState = 'set';
+      navigatorKey.currentState.pop();
+      navigatorKey.currentState.pushNamed(ConnectScreen.id);
+      showDialog(
+          context: navigatorKey.currentContext,
+          builder: (context) => AlertDialog(
+                title: Text("Connection Error"),
+                content: Text('Could not connect to experiment.'),
+              ));
       return;
     }
+    networkMod.nextAttempt();
+    networkMod.connect(confirmConnected, connectionFailed);
+  }
+
+  //set', 'private', 'public', 'done'
+
+  Future<void> confirmConnected(ws, String myWebSocketChannel) async {
+    print('running confirm Connected');
+    navigatorKey.currentState.pop();
+    await networkMod.confirmConnected(ws, myWebSocketChannel, startListening);
+  }
+
+  Future<void> startListening() async {
     print('start listening');
     gameStreamController.stream.listen((data) {
       consumeGameData(data);
@@ -71,7 +96,6 @@ class ClientMod with ChangeNotifier {
       default:
         print('invalid game data received: $data');
     }
-    return;
   }
 
   void chatMessageReceived(data) async {
@@ -80,7 +104,6 @@ class ClientMod with ChangeNotifier {
         senderNumber: data['sender number'],
         senderName: data['sender name'],
         sameSender: data['same sender']));
-    return;
   }
 
   void disconnect() {
