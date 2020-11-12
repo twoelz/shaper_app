@@ -1,10 +1,12 @@
 import 'dart:convert';
-// import 'dart:io';
-
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:yaml/yaml.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:string_validator/string_validator.dart';
+
+// import 'package:package_info/package_info.dart';
 // import 'package:http/http.dart';
 // import 'package:http/http.dart' as http;
 
@@ -13,6 +15,12 @@ class ConfigMod with ChangeNotifier {
   String port = '0';
   String playerName = '';
   int playerNumber = 0;
+
+  // Package info
+  // String appName = '';
+  // String packageName = '';
+  String version = '';
+  // String buildNumber = '';
 
   String privateBin = '';
   String privateKey = '';
@@ -24,6 +32,7 @@ class ConfigMod with ChangeNotifier {
 
   Map<String, dynamic> expMap;
   Map<String, dynamic> sMsgMap;
+  Map<String, dynamic> serverMap;
 
   bool showNetConfig = false;
 
@@ -32,11 +41,22 @@ class ConfigMod with ChangeNotifier {
     notifyListeners();
   }
 
-  void setServerConfigs(exp, sMsg) async {
+  void setServerConfigs(exp, sMsg, server) async {
     expMap = await json.decode(exp);
     expMapString = expMap.toString();
     sMsgMap = await json.decode(sMsg);
     sMsgMapString = sMsgMap.toString();
+    serverMap = await json.decode(server);
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+        'announceIpBin', serverMap['network']['announce ip bin']);
+    await prefs.setString(
+        'announceIpKey', serverMap['network']['announce ip key']);
+
+    print('PRIVATE IP BIN: ${serverMap['network']['announce ip bin']}');
+    print('PRIVATE IP KEY: ${serverMap['network']['announce ip key']}');
+
     notifyListeners();
   }
 
@@ -116,8 +136,27 @@ class ConfigMod with ChangeNotifier {
     initialState();
   }
 
-  void initialState() {
+  void initialState() async {
     syncDataWithProvider();
+    rootBundle.loadString('pubspec.yaml').then((String text) {
+      Map yaml = loadYaml(text);
+      // print(yaml['name']);
+      // print(yaml['description']);
+      // print(yaml['version']);
+      // print(yaml['author']);
+      // print(yaml['homepage']);
+      // print(yaml['dependencies']);
+      version = yaml['version'];
+      notifyListeners();
+    });
+
+    // PackageInfo.fromPlatform().then((PackageInfo packageInfo) {
+    //   // appName = packageInfo.appName;
+    //   // packageName = packageInfo.packageName;
+    //   version = packageInfo.version;
+    //   // buildNumber = packageInfo.buildNumber;
+    //   notifyListeners();
+    // });
   }
 
   Future syncDataWithProvider() async {

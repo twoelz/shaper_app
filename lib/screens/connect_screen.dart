@@ -46,6 +46,8 @@ class ConnectScreen extends StatelessWidget {
                     size: Theme.of(context).textTheme.headline2.fontSize,
                   ),
                   Text(' Shaper', style: Theme.of(context).textTheme.headline3),
+                  Text(context.watch<ConfigMod>().version,
+                      style: Theme.of(context).textTheme.caption),
                 ],
               ),
               MyVerticalFlexConstrainBox(

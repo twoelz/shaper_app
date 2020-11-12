@@ -104,7 +104,6 @@ class NetworkMod with ChangeNotifier {
         final result = await InternetAddress.lookup('google.com');
         if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
           internetConnected = true;
-          print('internet is connected');
         }
       } on SocketException catch (_) {
         print('internet is not connected');
@@ -220,11 +219,18 @@ class NetworkMod with ChangeNotifier {
         // broadcast the list of all the players to everyone
         //
         case 'configs':
-          configMod.setServerConfigs(data['exp'], data['s_msg']);
+          configMod.setServerConfigs(
+            data['exp'],
+            data['s_msg'],
+            data['server'],
+          );
           return;
         case 'accept player':
           print('player accepted: ${data['player']}');
           configMod.playerNumber = data['player'];
+          return;
+        case 'error':
+          print(data['message']);
           return;
         case 'print':
           print(data['message']);
@@ -330,25 +336,49 @@ class NetworkMod with ChangeNotifier {
   Future<void> connectPrivate(Function confirmConnectedCallback,
       Function connectionFailedCallback) async {
     print('trying connectPrivate');
-    List<String> ipPort = await getIpPortPrivateBin();
-    String ip = ipPort[0];
-    String port = ipPort[1];
-    if ((ip == previousIp && port == previousPort)) {
-      connectAttemptState = 'public';
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (!(prefs.containsKey('announceIpBin') ||
+        prefs.containsKey('announceIpKey'))) {
+      print("didn't find private bin and/or key");
       connectionFailedCallback();
-    } else {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString('ip', ip);
-      await prefs.setString('port', port);
-      previousIp = ip;
-      previousPort = port;
-      await myWebSocketConnection(
-          ip: ip,
-          port: port,
-          confirmConnectedCallback: confirmConnectedCallback,
-          connectionFailedCallback: connectionFailedCallback);
+      return;
     }
+
+    final privateAnnounceUrl =
+        'https://api.jsonbin.io/v3/b/${prefs.getString('announceIpBin')}/latest';
+    print('privateAnnounceUrl: ${prefs.getString('announceIpKey')}');
+    await http.get(privateAnnounceUrl, headers: {
+      'X-Master-key': prefs.getString('announceIpKey')
+    }).then((response) async {
+      print('private bin response received');
+      final Map<String, dynamic> responseJson = jsonDecode(response.body);
+      print('responseJson from privateBin:');
+      print(responseJson);
+      if (responseJson.containsKey('record')) {
+        final Map<String, dynamic> privateData = responseJson['record'];
+        String myIp = privateData['ip'];
+        String myPort = privateData['port'];
+        if (myIp == publicIP) {
+          print('connecting to local ip since running on same network');
+          myIp = privateData['local ip'];
+        }
+        await myWebSocketConnection(
+          ip: myIp,
+          port: myPort,
+          confirmConnectedCallback: confirmConnectedCallback,
+          connectionFailedCallback: connectionFailedCallback,
+        );
+      } else {
+        connectionFailedCallback();
+      }
+    }).catchError((e) {
+      print('Error in accessing private bin: $e');
+      connectionFailedCallback();
+    });
   }
+
+  // Future<void> connectPrivateProcess(Function confirmConnectedCallback,
+  //     Function connectionFailedCallback) async {}
 
   Future<void> connectPublic(Function confirmConnectedCallback,
       Function connectionFailedCallback) async {
@@ -706,7 +736,7 @@ class NetworkMod with ChangeNotifier {
       // var result;
       await DartIO.WebSocket.connect(
         '$myWebSocketAddress/',
-      ).then((ws) async {
+      ).timeout(Duration(seconds: 5)).then((ws) async {
         print('ws connected and now will call confirmConnectedCallback');
         confirmConnectedCallback(ws, myWebSocketChannel);
       }).catchError((e) {
@@ -756,10 +786,12 @@ class NetworkMod with ChangeNotifier {
 
     if (connected) {
       print('sending player name to server');
-      // connected now. send name
+      // connected now. send name, uniqueId and version
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      await channel.sink
-          .add(jsonEncode([prefs.getString('playerName'), uniqueId]));
+      await channel.sink.add(jsonEncode(
+          [prefs.getString('playerName'), uniqueId, configMod.version]));
+
+      // TODO: listen later if confirm player is in?
       clientStartListeningCallback();
     }
     notifyListeners();
