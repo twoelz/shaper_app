@@ -192,7 +192,8 @@ class MessageBubble extends StatelessWidget {
 }
 
 TextStyle emojiFallbackTextStyle(ctx) {
-  if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
+  // if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
+  if (Platform.isLinux || Platform.isMacOS) {
     return TextStyle(
         fontFamily: DefaultTextStyle.of(ctx).style.fontFamily,
         fontFamilyFallback: ['EmojiOne']
