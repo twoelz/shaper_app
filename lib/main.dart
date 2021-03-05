@@ -107,8 +107,8 @@ class RegularApp extends StatelessWidget {
       // for navigation without context: start_
       navigatorKey: navigatorKey,
       // _end
-      // initialRoute: ConnectScreen.id,
       initialRoute: ConnectScreen.id,
+      // initialRoute: GameScreen.id,
       routes: {
         ConnectScreen.id: (context) => ConnectScreen(),
         ConfigInfoScreen.id: (context) => ConfigInfoScreen(),

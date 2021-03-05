@@ -88,6 +88,12 @@ class ClientMod with ChangeNotifier {
     navigatorKey.currentState.pushNamed(GameScreen.id);
   }
 
+  void notifyDisconnect() async {
+    // TODO: add message saying disconnected first
+    navigatorKey.currentState.pop();
+    navigatorKey.currentState.pushNamed(ConnectScreen.id);
+  }
+
   void consumeGameData(data) async {
     switch (data['game data']) {
       case 'chat message':

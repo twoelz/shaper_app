@@ -31,8 +31,11 @@ import 'package:shaper_app/widgets/generic.dart';
 
 Future<String> getPublicIP() async {
   try {
-    const url = 'https://api.ipify.org';
+    // const url = 'https://api.ipify.org';
+    // var response = await http.get(url);
+    final Uri url = Uri.https("api.ipify.org", "");
     var response = await http.get(url);
+
     if (response.statusCode == 200) {
       // The response body is the IP in plain text, so just
       // return it as-is.
@@ -270,6 +273,8 @@ class NetworkMod with ChangeNotifier {
     connected = false;
     channel = null;
     notifyListeners();
+
+    clientMod.notifyDisconnect();
   }
 
   void nextAttempt() {
@@ -344,8 +349,8 @@ class NetworkMod with ChangeNotifier {
       return;
     }
 
-    final privateAnnounceUrl =
-        'https://api.jsonbin.io/v3/b/${prefs.getString('announceIpBin')}/latest';
+    final Uri privateAnnounceUrl = Uri.https(
+        "api.jsonbin.io", "/v3/b/${prefs.getString('announceIpBin')}/latest");
     print('privateAnnounceUrl: ${prefs.getString('announceIpKey')}');
     await http.get(privateAnnounceUrl, headers: {
       'X-Master-key': prefs.getString('announceIpKey')
@@ -387,8 +392,10 @@ class NetworkMod with ChangeNotifier {
     experimentersValid = [];
     experimentersInvalid = [];
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    final publicAnnounceUrl =
-        'https://api.jsonbin.io/v3/b/${prefs.getString('publicBin')}/latest';
+    // final publicAnnounceUrl =
+    //     'https://api.jsonbin.io/v3/b/${prefs.getString('publicBin')}/latest';
+    final Uri publicAnnounceUrl = Uri.https(
+        "api.jsonbin.io", "/v3/b/${prefs.getString('publicBin')}/latest");
     print('publicAnnounceUrl: $publicAnnounceUrl');
     await http.get(
       publicAnnounceUrl,
@@ -502,8 +509,10 @@ class NetworkMod with ChangeNotifier {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String ip = 'not found';
     String port = 'not found';
-    final publicAnnounceUrl =
-        'https://api.jsonbin.io/v3/b/${prefs.getString('publicBin')}/latest';
+    // final publicAnnounceUrl =
+    //     'https://api.jsonbin.io/v3/b/${prefs.getString('publicBin')}/latest';
+    final Uri publicAnnounceUrl = Uri.https(
+        "api.jsonbin.io", "/v3/b/${prefs.getString('publicBin')}/latest");
     print('publicAnnounceUrl: $publicAnnounceUrl');
 
     var responseJsonReceived = false;
@@ -777,6 +786,8 @@ class NetworkMod with ChangeNotifier {
     }, onDone: () {
       print('connection aborted');
       connected = false;
+      disconnect();
+      //TODO: message and send back to connect screen.
       return false;
     }, onError: (e) async {
       print('server error on channel.stream.listen: $e');

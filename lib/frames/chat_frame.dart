@@ -49,7 +49,15 @@ class ChatFrame extends StatelessWidget {
       // flutter_keyboard_visibility: makes sure chat gets focus
       // TODO: check if I have to dispose of onChange at any point
       // TODO: probably needs a subscribe and then cancel it?
-      KeyboardVisibility.onChange.listen((bool visible) {
+
+      // OLD - NOT WORKING (KEYBOARDVISIBILITY REMOVED)
+      // KeyboardVisibility.onChange.listen((bool visible) {
+      //   if (visible) {
+      //     chatFocusNode.requestFocus();
+      //   }
+      // });
+      var keyboardVisibilityController = KeyboardVisibilityController();
+      keyboardVisibilityController.onChange.listen((bool visible) {
         if (visible) {
           chatFocusNode.requestFocus();
         }

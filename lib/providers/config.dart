@@ -34,6 +34,8 @@ class ConfigMod with ChangeNotifier {
   Map<String, dynamic> sMsgMap;
   Map<String, dynamic> serverMap;
 
+  int numPlayers = 2;
+
   bool showNetConfig = false;
 
   void toggleShowNetConfig() {
@@ -47,6 +49,8 @@ class ConfigMod with ChangeNotifier {
     sMsgMap = await json.decode(sMsg);
     sMsgMapString = sMsgMap.toString();
     serverMap = await json.decode(server);
+
+    numPlayers = expMap['main']['number of players'];
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString(
