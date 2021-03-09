@@ -14,6 +14,10 @@ import 'package:shaper_app/data/streams.dart';
 class ClientMod with ChangeNotifier {
   NetworkMod networkMod;
 
+  // initialize game data
+  List<int> previousChoices = [0, 0, 1, 3];
+  List<int> currentChoices = [1, 2, 0, 4];
+
   ClientMod() {
     Timer(const Duration(milliseconds: 100), () => addClientModToNetworkMod());
     // Future.delayed(Duration(milliseconds: 100)).then((value) {

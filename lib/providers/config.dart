@@ -15,6 +15,7 @@ class ConfigMod with ChangeNotifier {
   String port = '0';
   String playerName = '';
   int playerNumber = 0;
+  bool debug = false;
 
   // Package info
   // String appName = '';
@@ -60,6 +61,7 @@ class ConfigMod with ChangeNotifier {
 
     print('PRIVATE IP BIN: ${serverMap['network']['announce ip bin']}');
     print('PRIVATE IP KEY: ${serverMap['network']['announce ip key']}');
+    debug = serverMap['network']['debug'];
 
     notifyListeners();
   }
