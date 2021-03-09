@@ -5,6 +5,7 @@ import 'package:shaper_app/providers/config.dart';
 import 'package:shaper_app/providers/client.dart';
 import 'package:shaper_app/data/streams.dart';
 import 'package:shaper_app/widgets/layout.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 const choiceSymbols = {
   0: SizedBox.shrink(),
@@ -12,6 +13,14 @@ const choiceSymbols = {
   2: Icon(Icons.ac_unit_outlined),
   3: Icon(Icons.add_alarm_sharp),
   4: Icon(Icons.airport_shuttle)
+};
+
+const choiceSVGs = {
+  0: 'transparent',
+  1: 'triangle',
+  2: 'rhombus',
+  3: 'rectangle',
+  4: 'oval',
 };
 
 class GameFrame extends StatelessWidget {
@@ -114,9 +123,21 @@ class CycleDataCell extends StatelessWidget {
         currentCycle
             // ? Icon(Icons.airline_seat_legroom_extra)
             // : Icon(Icons.ac_unit_outlined),
-            ? choiceSymbols[context.watch<ClientMod>().currentChoices[playerX]]
-            : choiceSymbols[
-                context.watch<ClientMod>().previousChoices[playerX]],
+            // ? choiceSymbols[context.watch<ClientMod>().currentChoices[playerX]]
+            // : Image(
+            //     width: 30,
+            //     image: AssetImage('assets/images/pentagon.png'),
+            //   ),
+            ? SvgPicture.asset(
+                'assets/images/${choiceSVGs[context.watch<ClientMod>().currentChoices[playerX]]}.svg',
+                width: 20,
+                height: 20,
+                semanticsLabel: 'Acme Logo')
+            : SvgPicture.asset(
+                'assets/images/${choiceSVGs[context.watch<ClientMod>().previousChoices[playerX]]}.svg',
+                width: 20,
+                height: 20,
+                semanticsLabel: 'Acme Logo'),
       ],
     );
   }
