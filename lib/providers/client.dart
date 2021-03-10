@@ -15,8 +15,8 @@ class ClientMod with ChangeNotifier {
   NetworkMod networkMod;
 
   // initialize game data
-  List<int> previousChoices = [0, 0, 1, 3];
-  List<int> currentChoices = [1, 2, 0, 4];
+  List<int> previousChoices = [1, 2, 3, 4];
+  List<int> currentChoices = [4, 3, 2, 1];
 
   ClientMod() {
     Timer(const Duration(milliseconds: 100), () => addClientModToNetworkMod());

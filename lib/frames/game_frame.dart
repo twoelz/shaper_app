@@ -15,13 +15,13 @@ const choiceSymbols = {
   4: Icon(Icons.airport_shuttle)
 };
 
-const choiceSVGs = {
-  0: 'transparent',
-  1: 'triangle',
-  2: 'rhombus',
-  3: 'rectangle',
-  4: 'oval',
-};
+// const choiceSVGs = {
+//   '0': 'transparent',
+//   '1': 'triangle',
+//   '2': 'rhombus',
+//   '3': 'rectangle',
+//   '4': 'oval',
+// };
 
 class GameFrame extends StatelessWidget {
   @override
@@ -113,6 +113,25 @@ class CycleDataCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String playerStringX = playerX.toString();
+    var currentChoice =
+        context.watch<ClientMod>().currentChoices[playerX].toString();
+    var previousChoice =
+        context.watch<ClientMod>().previousChoices[playerX].toString();
+    var shapes = context.watch<ConfigMod>().shapes;
+    String currentShape;
+    if (shapes.containsKey(currentChoice)) {
+      currentShape = shapes[currentChoice];
+    } else {
+      currentShape = 'oval';
+    }
+    String previousShape;
+    if (shapes.containsKey(previousChoice)) {
+      previousShape = shapes[previousChoice];
+    } else {
+      previousShape = 'oval';
+    }
+
     // return Text('P${x + 1}');
     return Column(
       children: [
@@ -128,16 +147,38 @@ class CycleDataCell extends StatelessWidget {
             //     width: 30,
             //     image: AssetImage('assets/images/pentagon.png'),
             //   ),
+            // ? SvgPicture.asset(
+            //     'assets/images/${choiceSVGs[currentChoice].toString()}.svg',
+            //     width: 20,
+            //     height: 20,
+            //   )
+            // : SvgPicture.asset(
+            //     'assets/images/${choiceSVGs[previousChoice.toString()]}.svg',
+            //     width: 20,
+            //     height: 20,
+            //   ),
+
             ? SvgPicture.asset(
-                'assets/images/${choiceSVGs[context.watch<ClientMod>().currentChoices[playerX]]}.svg',
+                'assets/images/$currentShape.svg',
                 width: 20,
                 height: 20,
-                semanticsLabel: 'Acme Logo')
+              )
             : SvgPicture.asset(
-                'assets/images/${choiceSVGs[context.watch<ClientMod>().previousChoices[playerX]]}.svg',
+                'assets/images/$previousShape.svg',
                 width: 20,
                 height: 20,
-                semanticsLabel: 'Acme Logo'),
+              ),
+
+        // ? SvgPicture.asset(
+        //     'assets/images/${context.watch<ConfigMod>().shapes[context.watch<ClientMod>().currentChoices[playerX] ?? ''] ?? 'transparent'}.svg',
+        //     width: 20,
+        //     height: 20,
+        //     semanticsLabel: 'Acme Logo')
+        // : SvgPicture.asset(
+        //     'assets/images/${context.watch<ConfigMod>().shapes[context.watch<ClientMod>().previousChoices[playerX] ?? ''] ?? 'transparent'}.svg',
+        //     width: 20,
+        //     height: 20,
+        //     semanticsLabel: 'Acme Logo'),
       ],
     );
   }

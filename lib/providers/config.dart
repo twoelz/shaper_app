@@ -36,6 +36,15 @@ class ConfigMod with ChangeNotifier {
   Map<String, dynamic> serverMap;
 
   int numPlayers = 2;
+  // Map<String, String> shapes;
+
+  Map<String, dynamic> shapes = {
+    '0': 'transparent',
+    '1': 'triangle',
+    '2': 'rhombus',
+    '3': 'rectangle',
+    '4': 'oval',
+  };
 
   bool showNetConfig = false;
 
@@ -52,6 +61,7 @@ class ConfigMod with ChangeNotifier {
     serverMap = await json.decode(server);
 
     numPlayers = expMap['main']['number of players'];
+    shapes = expMap['shapes'];
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString(
