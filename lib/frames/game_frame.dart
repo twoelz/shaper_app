@@ -109,28 +109,19 @@ class CycleDataCell extends StatelessWidget {
   final int playerX;
   final bool currentCycle;
   final bool reduce;
-  // initialize configured game data
 
   @override
   Widget build(BuildContext context) {
-    final String playerStringX = playerX.toString();
-    var currentChoice =
+    final String playerXString = playerX.toString();
+    final currentChoice =
         context.watch<ClientMod>().currentChoices[playerX].toString();
-    var previousChoice =
+    final previousChoice =
         context.watch<ClientMod>().previousChoices[playerX].toString();
-    var shapes = context.watch<ConfigMod>().shapes;
-    String currentShape;
-    if (shapes.containsKey(currentChoice)) {
-      currentShape = shapes[currentChoice];
-    } else {
-      currentShape = 'oval';
-    }
-    String previousShape;
-    if (shapes.containsKey(previousChoice)) {
-      previousShape = shapes[previousChoice];
-    } else {
-      previousShape = 'oval';
-    }
+    final Map<String, dynamic> shapes = context.watch<ConfigMod>().shapes;
+    final List shapeColors =
+        context.watch<ConfigMod>().shapeColors[playerXString];
+    final String currentShape = shapeOrTransparent(shapes, currentChoice);
+    final String previousShape = shapeOrTransparent(shapes, previousChoice);
 
     // return Text('P${x + 1}');
     return Column(
@@ -140,46 +131,32 @@ class CycleDataCell extends StatelessWidget {
                 fontSize: Theme.of(context).textTheme.bodyText1.fontSize)),
         //TODO: change choice icons to actual choice corresponding
         currentCycle
-            // ? Icon(Icons.airline_seat_legroom_extra)
-            // : Icon(Icons.ac_unit_outlined),
-            // ? choiceSymbols[context.watch<ClientMod>().currentChoices[playerX]]
-            // : Image(
-            //     width: 30,
-            //     image: AssetImage('assets/images/pentagon.png'),
-            //   ),
-            // ? SvgPicture.asset(
-            //     'assets/images/${choiceSVGs[currentChoice].toString()}.svg',
-            //     width: 20,
-            //     height: 20,
-            //   )
-            // : SvgPicture.asset(
-            //     'assets/images/${choiceSVGs[previousChoice.toString()]}.svg',
-            //     width: 20,
-            //     height: 20,
-            //   ),
-
             ? SvgPicture.asset(
                 'assets/images/$currentShape.svg',
                 width: 20,
                 height: 20,
+                color: Color.fromRGBO(
+                    shapeColors[0], shapeColors[1], shapeColors[2], 1.0),
               )
             : SvgPicture.asset(
                 'assets/images/$previousShape.svg',
                 width: 20,
                 height: 20,
+                // color: Colors.blueAccent,
+                color: Color.fromRGBO(
+                    shapeColors[0], shapeColors[1], shapeColors[2], 1.0),
               ),
-
-        // ? SvgPicture.asset(
-        //     'assets/images/${context.watch<ConfigMod>().shapes[context.watch<ClientMod>().currentChoices[playerX] ?? ''] ?? 'transparent'}.svg',
-        //     width: 20,
-        //     height: 20,
-        //     semanticsLabel: 'Acme Logo')
-        // : SvgPicture.asset(
-        //     'assets/images/${context.watch<ConfigMod>().shapes[context.watch<ClientMod>().previousChoices[playerX] ?? ''] ?? 'transparent'}.svg',
-        //     width: 20,
-        //     height: 20,
-        //     semanticsLabel: 'Acme Logo'),
       ],
     );
+  }
+
+  String shapeOrTransparent(Map<String, dynamic> shapes, String someChoice) {
+    String someShape;
+    if (shapes.containsKey(someChoice)) {
+      someShape = shapes[someChoice];
+    } else {
+      someShape = 'transparent';
+    }
+    return someShape;
   }
 }
