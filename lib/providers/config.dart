@@ -36,10 +36,11 @@ class ConfigMod with ChangeNotifier {
   Map<String, dynamic> serverMap;
 
   int numPlayers = 2;
+  int numShapes = 3;
   // Map<String, String> shapes;
 
   Map<String, dynamic> shapes = {
-    '0': 'transparent',
+    '0': 'blank',
   };
 
   Map<String, dynamic> shapeColors = {
@@ -61,6 +62,7 @@ class ConfigMod with ChangeNotifier {
     serverMap = await json.decode(server);
 
     numPlayers = expMap['main']['number of players'];
+    numShapes = expMap['main']['number of shapes'];
     shapes.addAll(expMap['shapes']);
     shapeColors.addAll(expMap['colors']);
 

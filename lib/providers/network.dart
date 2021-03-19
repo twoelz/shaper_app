@@ -9,7 +9,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
-import 'package:universal_io/prefer_universal/io.dart' hide WebSocket;
+// import 'package:universal_io/prefer_universal/io.dart' hide WebSocket;
+import 'package:universal_io/io.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import 'package:shared_preferences/shared_preferences.dart';

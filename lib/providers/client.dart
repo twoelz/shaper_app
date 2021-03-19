@@ -17,6 +17,8 @@ class ClientMod with ChangeNotifier {
   // initialize game data
   List<int> previousChoices = [1, 2, 3, 4];
   List<int> currentChoices = [4, 3, 2, 1];
+  int choiceShape = 0;
+  bool choiceConfirmed = false;
 
   ClientMod() {
     Timer(const Duration(milliseconds: 100), () => addClientModToNetworkMod());
@@ -127,5 +129,10 @@ class ClientMod with ChangeNotifier {
       networkMod.sendChatMessageToServer(chatMessageText);
       chatMessageText = '';
     }
+  }
+
+  void chooseShape(chosenShape) {
+    choiceShape = chosenShape;
+    notifyListeners();
   }
 }
